@@ -17,12 +17,13 @@ stations = ['Fehmarn Belt Buoy', 'Kiel Lighthouse',
             'North Sea Buoy II', 'North Sea Buoy III']
 
 params = ['WT', 'SZ']
+paramdict = {'WT': 'Wassertemperatur [° C]', 'SZ':'Salzgehalt [PSU]'}
 time_period = '20200101_20240630'
 xlims = [dt(2020,1,1,0,0),dt(2024,6,3,23,59)]
 
 cm = 1/2.54  # centimeters in inches
-figsize= (18*cm,27*cm)
-fig = plt.figure(figsize=figsize)
+figsize= (25*cm, 17*cm)
+fig = plt.figure(figsize=figsize, layout='constrained')
 # fontdict for text in figure
 fontdict = {'family': ['sans-serif'],
                      'variant': 'normal',
@@ -30,6 +31,7 @@ fontdict = {'family': ['sans-serif'],
                      'stretch': 'normal',
                      'size': 12.0,
                      'math_fontfamily': 'dejavusans'}
+savefigpath = 'C:/Users/Iris/Documents/IU-Studium/Masterarbeit/Code_Stuf/temp/all_time_series.png'
 
 def make_figure():
     count_rows=0
@@ -42,39 +44,62 @@ def make_figure():
             data=read_station_data(filestr=filestr)
             # unique depth levels of current station
             unique_d=list(set(data.Z_LOCATION))
+            unique_d.sort(reverse=True)
             #define colormap
             if p == 'WT':
-                cmp =mtpl.colormaps['Blues'](np.linspace(0,1,2*len(unique_d)))
+                cmp =mtpl.colormaps['Blues'](np.linspace(0,1,len(unique_d)+3))
             else:
-                cmp = mtpl.colormaps['Reds'](np.linspace(0,1,2*len(unique_d)))
-            my_cmap = mtpl.colors.ListedColormap(cmp, name='my_colors')
-            d_counter=len(unique_d)
+                cmp = mtpl.colormaps['Purples'](np.linspace(0,1,len(unique_d)+3))
+            
+            # initiate counter for color values
+            d_counter=2
             for d in unique_d:
+               
                 ddata = data[data['Z_LOCATION']==d] # entries corresponding to depth level d
-                ddata = ddata[ddata['QF3']==2]
-                ax=plt.subplot(nrows, ncols, count_rows*2+count_cols)
-                ax.set_prop_cycle(cycler('color',cmp))
                 
-                plt.plot(ddata['DATA_VALUE'], '+', color=cmp[d_counter])
+                ax=plt.subplot(nrows, ncols, count_rows*2+count_cols)
+                            
+                # data with qf=2
+                ddata_good = ddata[ddata['QF3']==2]
+                plt.plot(ddata_good.DATA_VALUE, '+', color=cmp[d_counter])
                 
                 if st==stations[0]:
-                    plt.title(p)
+                    plt.title(paramdict[p])
                 if p!='SZ':
-                    txt = plt.text(1.05, 0.5, st, 
-                             horizontalalignment='center',
-                             verticalalignment='center', 
-                             transform=plt.gca().transAxes, 
-                             rotation=90, **fontdict)
+                    plt.text(1.05, 0.5, st, 
+                        horizontalalignment='center',
+                        verticalalignment='center', 
+                        transform=plt.gca().transAxes, 
+                        rotation=90, **fontdict)
                 d_counter+=1
+            # keep current ylims
+            ylims = plt.ylim()
+            
+            # data with quality flag 3 or 4
+            ddata_bad = data[data['QF3']!=2]
+            bad = plt.plot(ddata_bad.DATA_VALUE, '+', color='r')
+            
+            # set xlims, ylims
+            plt.ylim(ylims)
             plt.xlim(xlims)
-            legstring= [str(d) for d in unique_d]
-            plt.legend(legstring)
+            plt.grid()
+            
+            # make legend
+            # legstring= [str(d) for d in unique_d]
+            # legstring.append('flag=3,4')
+            # plt.legend(legstring)
+            
+            
             
             # customize axes labels etc.
             if count_rows*2+count_cols not in [nrows*ncols-1, nrows*ncols]:
                 ax.set_xticklabels([])
+            else:
+                labels = ax.get_xticklabels()
+                ax.set_xticklabels(labels,rotation=25)
             count_cols+=1 
-        count_rows+=1    
+        count_rows+=1 
+    plt.savefig('../../00_Masterarbeit/Abbildungen/all_time_series.png', bbox_inches='tight')
         
 
 def read_station_data(filestr):
