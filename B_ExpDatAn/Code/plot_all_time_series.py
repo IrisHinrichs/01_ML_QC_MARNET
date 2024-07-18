@@ -27,7 +27,7 @@ xlims = [dt(2020,1,1,0,0),dt(2024,6,3,23,59)]
 
 cm = 1/2.54  # conversion factor centimeters=>inches
 figsize= (16.5*cm, 14*cm)
-dpi=600
+dpi=300
 fig = plt.figure(figsize=figsize, layout='constrained',dpi=dpi)
 #fig = plt.figure()
 # fontdict for text in figure
