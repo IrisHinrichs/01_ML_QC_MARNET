@@ -8,6 +8,7 @@ import datetime as dt
 import time
 import numpy as np
 import pandas as pd
+from utilities import read_station_data
 
 datapath = '../../A_Data/'
 stations = ['Fehmarn Belt Buoy', 'Kiel Lighthouse', 
@@ -16,7 +17,7 @@ stationsdict = {'Fehmarn Belt Buoy': 'Fehmarn',
                 'Kiel Lighthouse': "Leuchtturm Kiel", 
                 'North Sea Buoy II': 'Nordsee II', 
                 'North Sea Buoy III': 'Nordsee III'}
-paracodes=['WT','SZ']
+pcodes=['WT','SZ']
 
 def statistics(stname='North Sea Buoy II', paracode='WT', dlevels='all', 
             start=dt.datetime(2020,1,1), end=dt.datetime(2024,6,30)):
@@ -46,9 +47,9 @@ def statistics(stname='North Sea Buoy II', paracode='WT', dlevels='all',
     # number of possible quality flags
     n_qfs = 4
      # %% define path and filename
-    
     strings = '_'.join([stname.replace(' ','_'),start.strftime('%Y%m%d'), end.strftime('%Y%m%d'), paracode, str(dlevels), '.csv'])
     file = datapath+strings
+    df = read_station_data(file)
     
    
     n_dp=len(df)
