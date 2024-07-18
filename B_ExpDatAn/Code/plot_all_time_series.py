@@ -6,11 +6,9 @@ Created on Tue Jul 16 20:13:09 2024
 """
 from matplotlib import pyplot as plt
 import matplotlib as mtpl
-import pandas as pd
 from datetime import datetime as dt
 import numpy as np
-from cycler import cycler
-import seaborn as sns
+from utilities import read_station_data
 
 datapath = '../../A_Data/'
 stations = ['Fehmarn Belt Buoy', 'Kiel Lighthouse', 
@@ -115,13 +113,8 @@ def make_figure():
     plt.savefig(savefigpath, bbox_inches='tight', dpi=dpi)
         
 
-def read_station_data(filestr):
-    usecols=['TIME_VALUE','Z_LOCATION','DATA_VALUE', 'QF1', 'QF3']
-    data = pd.read_csv(filestr, index_col='TIME_VALUE', usecols=usecols)
-    data.index = pd.to_datetime(data.index)
-    return data
-
 def main():
     make_figure()
     
-main()
+if __name__ == '__main__':
+    main()
