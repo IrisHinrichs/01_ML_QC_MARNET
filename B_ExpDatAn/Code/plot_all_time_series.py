@@ -12,26 +12,37 @@ import numpy as np
 from cycler import cycler
 import seaborn as sns
 
-datapath = '../A_Data/'
+datapath = '../../A_Data/'
 stations = ['Fehmarn Belt Buoy', 'Kiel Lighthouse', 
             'North Sea Buoy II', 'North Sea Buoy III']
+stationsdict = {'Fehmarn Belt Buoy': 'Fehmarn', 
+                'Kiel Lighthouse': "Leuchtturm Kiel", 
+                'North Sea Buoy II': 'Nordsee II', 
+                'North Sea Buoy III': 'Nordsee III'}
 
 params = ['WT', 'SZ']
-paramdict = {'WT': 'Wassertemperatur [° C]', 'SZ':'Salzgehalt [PSU]'}
+paramdict = {'WT': 'Wassertemperatur [° C]', 'SZ':'Salzgehalt []'}
 time_period = '20200101_20240630'
 xlims = [dt(2020,1,1,0,0),dt(2024,6,3,23,59)]
 
-cm = 1/2.54  # centimeters in inches
-figsize= (25*cm, 17*cm)
-fig = plt.figure(figsize=figsize, layout='constrained')
+cm = 1/2.54  # conversion factor centimeters=>inches
+figsize= (16.5*cm, 14*cm)
+dpi=600
+fig = plt.figure(figsize=figsize, layout='constrained',dpi=dpi)
+#fig = plt.figure()
 # fontdict for text in figure
+fs = 10
 fontdict = {'family': ['sans-serif'],
                      'variant': 'normal',
                      'weight': 'normal',
                      'stretch': 'normal',
-                     'size': 12.0,
+                     'size': fs,
                      'math_fontfamily': 'dejavusans'}
-savefigpath = 'C:/Users/Iris/Documents/IU-Studium/Masterarbeit/Code_Stuf/temp/all_time_series.png'
+savefigpath = '../Figures/all_time_series.png'
+marker = '.'
+msize=1
+fillst= 'full'
+
 
 def make_figure():
     count_rows=0
@@ -61,12 +72,12 @@ def make_figure():
                             
                 # data with qf=2
                 ddata_good = ddata[ddata['QF3']==2]
-                plt.plot(ddata_good.DATA_VALUE, '+', color=cmp[d_counter])
+                plt.plot(ddata_good.DATA_VALUE,marker, markersize=msize,fillstyle=fillst, color=cmp[d_counter])
                 
                 if st==stations[0]:
-                    plt.title(paramdict[p])
+                    plt.title(paramdict[p], fontsize=fs)
                 if p!='SZ':
-                    plt.text(1.05, 0.5, st, 
+                    plt.text(1.05, 0.5, stationsdict[st], 
                         horizontalalignment='center',
                         verticalalignment='center', 
                         transform=plt.gca().transAxes, 
@@ -77,7 +88,7 @@ def make_figure():
             
             # data with quality flag 3 or 4
             ddata_bad = data[data['QF3']!=2]
-            bad = plt.plot(ddata_bad.DATA_VALUE, '+', color='r')
+            bad = plt.plot(ddata_bad.DATA_VALUE, marker, markersize=msize,markerfacecolor='r', color='r')
             
             # set xlims, ylims
             plt.ylim(ylims)
@@ -92,14 +103,16 @@ def make_figure():
             
             
             # customize axes labels etc.
+            plt.yticks(fontsize= fs)
             if count_rows*2+count_cols not in [nrows*ncols-1, nrows*ncols]:
                 ax.set_xticklabels([])
             else:
-                labels = ax.get_xticklabels()
-                ax.set_xticklabels(labels,rotation=25)
+                # labels = ax.get_xticklabels()
+                # label_locs = ax.get_xticks()
+                plt.xticks(rotation=45, fontsize=fs)
             count_cols+=1 
         count_rows+=1 
-    plt.savefig('../../00_Masterarbeit/Abbildungen/all_time_series.png', bbox_inches='tight')
+    plt.savefig(savefigpath, bbox_inches='tight', dpi=dpi)
         
 
 def read_station_data(filestr):
