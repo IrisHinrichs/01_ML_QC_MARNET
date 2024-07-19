@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 import matplotlib as mtpl
 from datetime import datetime as dt
 import numpy as np
-from utilities import read_station_data
+from utilities import read_station_data, get_filestring
 
 datapath = '../../A_Data/'
 stations = ['Fehmarn Belt Buoy', 'Kiel Lighthouse', 
@@ -20,7 +20,6 @@ stationsdict = {'Fehmarn Belt Buoy': 'Fehmarn',
 
 params = ['WT', 'SZ']
 paramdict = {'WT': 'Wassertemperatur [° C]', 'SZ':'Salzgehalt []'}
-time_period = '20200101_20240630'
 xlims = [dt(2020,1,1,0,0),dt(2024,6,3,23,59)]
 
 cm = 1/2.54  # conversion factor centimeters=>inches
@@ -49,7 +48,7 @@ def make_figure():
     for st in stations:
         count_cols=1
         for p in params:
-            filestr = datapath+st.replace(' ', '_')+'_'+time_period+'_'+p+'_all_.csv'
+            filestr = get_filestring(st, p, xlims[0], xlims[1])
             data=read_station_data(filestr=filestr)
             # unique depth levels of current station
             unique_d=list(set(data.Z_LOCATION))
