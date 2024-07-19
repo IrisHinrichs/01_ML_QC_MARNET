@@ -9,32 +9,11 @@ import matplotlib as mtpl
 from datetime import datetime as dt
 import numpy as np
 from utilities import read_station_data, get_filestring
+from common_variables import datapath, layout, dpi, cm, stations, stationsdict,\
+    params, paramdict, tlims, fs, fontdict
 
-datapath = '../../A_Data/'
-stations = ['Fehmarn Belt Buoy', 'Kiel Lighthouse', 
-            'North Sea Buoy II', 'North Sea Buoy III']
-stationsdict = {'Fehmarn Belt Buoy': 'Fehmarn', 
-                'Kiel Lighthouse': "Leuchtturm Kiel", 
-                'North Sea Buoy II': 'Nordsee II', 
-                'North Sea Buoy III': 'Nordsee III'}
-
-params = ['WT', 'SZ']
-paramdict = {'WT': 'Wassertemperatur [° C]', 'SZ':'Salzgehalt []'}
-xlims = [dt(2020,1,1,0,0),dt(2024,6,3,23,59)]
-
-cm = 1/2.54  # conversion factor centimeters=>inches
 figsize= (16.5*cm, 14*cm)
-dpi=300
-fig = plt.figure(figsize=figsize, layout='constrained',dpi=dpi)
-#fig = plt.figure()
-# fontdict for text in figure
-fs = 10
-fontdict = {'family': ['sans-serif'],
-                     'variant': 'normal',
-                     'weight': 'normal',
-                     'stretch': 'normal',
-                     'size': fs,
-                     'math_fontfamily': 'dejavusans'}
+fig = plt.figure(figsize=figsize, layout=layout ,dpi=dpi)
 savefigpath = '../Figures/all_time_series.png'
 marker = '.'
 msize=1
@@ -48,8 +27,8 @@ def make_figure():
     for st in stations:
         count_cols=1
         for p in params:
-            filestr = get_filestring(st, p, xlims[0], xlims[1])
-            data=read_station_data(filestr=filestr)
+            filestr = get_filestring(st, p, tlims[0], tlims[1])
+            data=read_station_data(filestr=datapath+filestr)
             # unique depth levels of current station
             unique_d=list(set(data.Z_LOCATION))
             unique_d.sort(reverse=True)
@@ -89,7 +68,7 @@ def make_figure():
             
             # set xlims, ylims
             plt.ylim(ylims)
-            plt.xlim(xlims)
+            plt.xlim(tlimslims)
             plt.grid()
             
             # make legend
