@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from utilities import read_station_data, get_filestring
 from matplotlib import pyplot as plt
+from matplotlib.legend_handler import HandlerTuple
 
 from common_variables import datapath, layout, cm, stations, stationsdict,\
     params, paramdict, tlims, fs, fontdict, bbox_inches
@@ -76,13 +77,14 @@ def plot_coverage():
     startts = tlims[0]
     stopts = tlims[1]
     max_ts_length = len(pd.date_range(start=startts, end=stopts, freq='H'))
-    counter_p = -1
-
-    for p in params:
-        counter_p+=1
-        counter_s = -1
-        for s in stations:
-            counter_s+=1
+    counter_s = -1
+    all_axes = []
+    for s in stations:
+        station_axes = []
+        counter_s+=1
+        counter_p = -1
+        for p in params:
+            counter_p+=1
             filestring = get_filestring(s,p,)
             file = datapath+filestring
             data = read_station_data(file)
@@ -91,6 +93,8 @@ def plot_coverage():
             ts_frac = data.groupby('Z_LOCATION').count()/max_ts_length*100
             ax = plt.plot(ts_frac['DATA_VALUE'], ts_frac.index, marker[counter_s], markersize=msize,
                      fillstyle=fillst, color=colors[counter_p])
+            station_axes.append(ax[0])
+        all_axes.append(tuple(station_axes))
             
     plt.title('Zeitliche Abdeckung', fontsize=fs)
     
@@ -109,7 +113,8 @@ def plot_coverage():
     plt.grid()
     plt.show()
     
-    plt.legend(list(stationsdict.values()))
+    plt.legend(all_axes,list(stationsdict.values()),
+               handler_map={tuple: HandlerTuple(ndivide=None)})
     
     # customize axes labels etc.
     plt.yticks(fontsize= fs)
