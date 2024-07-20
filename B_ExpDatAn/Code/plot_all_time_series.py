@@ -9,11 +9,13 @@ import matplotlib as mtpl
 from datetime import datetime as dt
 import numpy as np
 from utilities import read_station_data, get_filestring
-from common_variables import datapath, layout, dpi, cm, stations, stationsdict,\
-    params, paramdict, tlims, fs, fontdict
+from common_variables import datapath, layout, cm, stations, stationsdict,\
+    params, paramdict, tlims, fs, fontdict, bbox_inches
 
-figsize= (16.5*cm, 14*cm)
-fig = plt.figure(figsize=figsize, layout=layout ,dpi=dpi)
+# define figure height
+plt.rcParams['figure.figsize'][1]=14*cm
+fig = plt.figure(layout=layout)
+
 savefigpath = '../Figures/all_time_series.png'
 marker = '.'
 msize=1
@@ -64,11 +66,11 @@ def make_figure():
             
             # data with quality flag 3 or 4
             ddata_bad = data[data['QF3']!=2]
-            bad = plt.plot(ddata_bad.DATA_VALUE, marker, markersize=msize,markerfacecolor='r', color='r')
+            plt.plot(ddata_bad.DATA_VALUE, marker, markersize=msize,markerfacecolor='r', color='r')
             
             # set xlims, ylims
             plt.ylim(ylims)
-            plt.xlim(tlimslims)
+            plt.xlim(tlims)
             plt.grid()
             
             # make legend
@@ -88,7 +90,7 @@ def make_figure():
                 plt.xticks(rotation=45, fontsize=fs)
             count_cols+=1 
         count_rows+=1 
-    plt.savefig(savefigpath, bbox_inches='tight', dpi=dpi)
+    fig.savefig(savefigpath, bbox_inches=bbox_inches)
         
 
 def main():
