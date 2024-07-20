@@ -8,33 +8,29 @@ import datetime as dt
 import time
 import numpy as np
 import pandas as pd
-from utilities import read_station_data
+from utilities import read_station_data, get_filestring
+from matplotlib import pyplot as plt
 
-datapath = '../../A_Data/'
-stations = ['Fehmarn Belt Buoy', 'Kiel Lighthouse', 
-            'North Sea Buoy II', 'North Sea Buoy III']
-stationsdict = {'Fehmarn Belt Buoy': 'Fehmarn', 
-                'Kiel Lighthouse': "Leuchtturm Kiel", 
-                'North Sea Buoy II': 'Nordsee II', 
-                'North Sea Buoy III': 'Nordsee III'}
-pcodes=['WT','SZ']
+from common_variables import datapath, layout, cm, stations, stationsdict,\
+    params, paramdict, tlims, fs, fontdict, bbox_inches
+    
 
 def statistics(stname='North Sea Buoy II', paracode='WT', dlevels='all', 
-            start=dt.datetime(2020,1,1), end=dt.datetime(2024,6,30)):
+            start=tlims[0], end=tlims[1]):
     '''
-    Gain statistics of parameter time series and save them to .csv file
+    Gain statistics of parameter time series and print them.
 
     Parameters
     ----------
     stname : str, optional
-        Name of the station to be plotted, as in table column insituadm.time_series_point.name. 
+        Name of the station. 
         The default is 'North Sea Buoy II'.
     paracode : str, optional
-        Code of observed parameter, as in table column insituadm.parameter.code The default is 'WT'.
+        Code of observed parameter. The default is 'WT'.
     dlevels : str of list, optional
         string or tuple of depth levels. The default is 'all'.
     start : datetime.datetime, optional
-        Start of time series. The default is dt.datetime(2021,1,1).
+        Start of time series. The default is dt.datetime(2020,1,1).
     end : datetime.datetime, optional
         End of time series. The default is dt.datetime(2024,4,30).
 
@@ -47,7 +43,7 @@ def statistics(stname='North Sea Buoy II', paracode='WT', dlevels='all',
     # number of possible quality flags
     n_qfs = 4
      # %% define path and filename
-    strings = '_'.join([stname.replace(' ','_'),start.strftime('%Y%m%d'), end.strftime('%Y%m%d'), paracode, str(dlevels), '.csv'])
+    strings = get_filestring(stname)
     file = datapath+strings
     df = read_station_data(file)
     
@@ -66,10 +62,64 @@ def statistics(stname='North Sea Buoy II', paracode='WT', dlevels='all',
     print('----------------------------------\n')
     return
 
-
-for s in stations:
-    for p in pcodes:
-        #plot_ts(stname=s, paracode=p)   
-        #scatter_TS()
-        statistics(stname=s, paracode=p)
+def plot_coverage():
+    # variables related to figure
+    plt.rcParams['figure.figsize'][1]=10*cm
+    fig = plt.figure(layout=layout)
+    savefigpath = '../Figures/temporal_coverage.png'
+    marker = ['o','v','*','s']
+    msize=5
+    fillst= 'full'
+    colors = ['blue', 'purple']
     
+    # maximum possible length of time series
+    startts = tlims[0]
+    stopts = tlims[1]
+    max_ts_length = len(pd.date_range(start=startts, end=stopts, freq='H'))
+    counter_p = -1
+
+    for p in params:
+        counter_p+=1
+        counter_s = -1
+        for s in stations:
+            counter_s+=1
+            filestring = get_filestring(s,p,)
+            file = datapath+filestring
+            data = read_station_data(file)
+            
+            # fraction of time series len
+            ts_frac = data.groupby('Z_LOCATION').count()/max_ts_length*100
+            ax = plt.plot(ts_frac['DATA_VALUE'], ts_frac.index, marker[counter_s], markersize=msize,
+                     fillstyle=fillst, color=colors[counter_p])
+            
+    plt.title('Zeitliche Abdeckung', fontsize=fs)
+    
+    # get current yticklabel locations
+    yticklocs = plt.gca().get_yticks()
+    yticklabels = plt.gca().get_yticklabels()
+    yticklabels = [l._text.replace(chr(8722), '') for l in yticklabels]
+ 
+    
+    # set xlims, ylims, labels
+    plt.ylim((-39,1))
+    plt.ylabel('Wassertiefe [m]')
+    plt.xlabel('Abdeckung [%]')
+    plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
+
+    plt.grid()
+    plt.show()
+    
+    plt.legend(list(stationsdict.values()))
+    
+    # customize axes labels etc.
+    plt.yticks(fontsize= fs)
+    plt.xticks(fontsize=fs)
+    fig.savefig(savefigpath, bbox_inches=bbox_inches)        
+    return
+def main():
+    for s in stations:
+        for p in params:
+            #plot_ts(stname=s, paracode=p)   
+            #scatter_TS()
+            statistics(stname=s, paracode=p)
+plot_coverage()
