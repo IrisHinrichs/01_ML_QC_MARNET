@@ -8,7 +8,7 @@ import pandas as pd
 import datetime as dt
 
 
-def get_filestring(s='Nordsee II',p='WT',start=dt.datetime(2020,1,1), end=dt.datetime(2024,6,30)):
+def get_filestring(s='North Sea Buoy II',p='WT',start=dt.datetime(2020,1,1), end=dt.datetime(2024,6,30)):
     '''
     Make string of file name based on stationname, parameter name, start date
     and end date of data
