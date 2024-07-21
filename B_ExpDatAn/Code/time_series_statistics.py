@@ -68,8 +68,8 @@ def plot_coverage():
     plt.rcParams['figure.figsize'][1]=10*cm
     fig = plt.figure(layout=layout)
     savefigpath = '../Figures/temporal_coverage.png'
-    marker = ['o','v','*','s']
-    msize=5
+    marker = [['1','v','P','s'], ['2', '^','*',  'D']]
+    msize=7
     fillst= 'full'
     colors = ['blue', 'purple']
     
@@ -91,8 +91,9 @@ def plot_coverage():
             
             # fraction of time series len
             ts_frac = data.groupby('Z_LOCATION').count()/max_ts_length*100
-            ax = plt.plot(ts_frac['DATA_VALUE'], ts_frac.index, marker[counter_s], markersize=msize,
-                     fillstyle=fillst, color=colors[counter_p])
+            ax = plt.plot(ts_frac['DATA_VALUE'], ts_frac.index,
+                          marker[counter_p][counter_s], markersize=msize,
+                          color=colors[counter_p])
             station_axes.append(ax[0])
         all_axes.append(tuple(station_axes))
             
