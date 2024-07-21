@@ -91,9 +91,8 @@ def plot_coverage():
             
             # fraction of time series len
             ts_frac = data.groupby('Z_LOCATION').count()/max_ts_length*100
-            ax = plt.plot(ts_frac['DATA_VALUE'], ts_frac.index,
-                          marker[counter_p][counter_s], markersize=msize,
-                          color=colors[counter_p])
+            ax = plt.plot(ts_frac['DATA_VALUE'], ts_frac.index, marker[counter_s], markersize=msize,
+                     fillstyle=fillst, color=colors[counter_p])
             station_axes.append(ax[0])
         all_axes.append(tuple(station_axes))
             
@@ -122,10 +121,86 @@ def plot_coverage():
     plt.xticks(fontsize=fs)
     fig.savefig(savefigpath, bbox_inches=bbox_inches)        
     return
+
+def plot_gaps():
+    # variables related to figure
+    plt.rcParams['figure.figsize'][1]=10*cm
+    fig = plt.figure(layout=layout)
+    savefigpath = '../Figures/data_gaps.png'
+    marker = [['1','v','P','s'], ['2', '^','*',  'D']]
+    msize=7
+    fillst= 'full'
+    colors = ['blue', 'purple']
+    
+    # maximum possible length of time series
+    startts = tlims[0]
+    stopts = tlims[1]
+    max_ts_length = len(pd.date_range(start=startts, end=stopts, freq='H'))
+    counter_s = -1
+    all_axes = []
+    for s in stations:
+        station_axes = []
+        counter_s+=1
+        counter_p = -1
+        for p in params:
+            counter_p+=1
+            filestring = get_filestring(s,p,)
+            file = datapath+filestring
+            print(filestring)
+            file = datapath+filestring
+            data = read_station_data(file)
+            unique_d=list(set(data.Z_LOCATION))
+            unique_d.sort(reverse=True)
+            for d in unique_d:
+                # get vector with time stamps
+                time_vec = pd.Series(data[data['Z_LOCATION']==d].index)
+                diff_vec = time_vec.diff()
+                # time difference between neighbouring observations in hours
+                diff_vec = diff_vec.dt.days*24+diff_vec.dt.seconds/3600
+                
+                # any time differences < 1?
+                min_time_diff = np.nanmin(diff_vec)
+                if min_time_diff<=1:
+                    print('Minimale Zeitdifferenz: '+ str(min_time_diff)+' Stunden')
+                
+                # maximum time difference
+                max_time_diff = np.nanmax(diff_vec)
+                print('Maximale Zeitdifferenz: '+ str(max_time_diff)+' Stunden')
+                # plot series of time differences
+                plt.plot(diff_vec, '+')
+                plt.gca().set_yscale('log')
+                
+                #plot histogram
+                
+                #Lagemaße Verteilung der zeitl. Differenzen
+        all_axes.append(tuple(station_axes))
+            
+    plt.title('Zeitliche Abdeckung', fontsize=fs)
+    
+    # get current yticklabel locations
+    yticklocs = plt.gca().get_yticks()
+    yticklabels = plt.gca().get_yticklabels()
+    yticklabels = [l._text.replace(chr(8722), '') for l in yticklabels]
+ 
+    
+    # set xlims, ylims, labels
+    plt.ylim((-39,1))
+    plt.ylabel('Wassertiefe [m]')
+    plt.xlabel('Abdeckung [%]')
+    plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
+
+    plt.grid()
+    plt.show()
+    
+    plt.legend(all_axes,list(stationsdict.values()),
+               handler_map={tuple: HandlerTuple(ndivide=None)})
+    
+    # customize axes labels etc.
+    plt.yticks(fontsize= fs)
+    plt.xticks(fontsize=fs)
+    fig.savefig(savefigpath, bbox_inches=bbox_inches)        
 def main():
     for s in stations:
         for p in params:
-            #plot_ts(stname=s, paracode=p)   
-            #scatter_TS()
             statistics(stname=s, paracode=p)
 plot_coverage()
