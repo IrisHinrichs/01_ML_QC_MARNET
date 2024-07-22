@@ -156,21 +156,23 @@ def plot_gaps():
                 time_vec = pd.Series(data[data['Z_LOCATION']==d].index)
                 diff_vec = time_vec.diff()
                 # time difference between neighbouring observations in hours
-                diff_vec = diff_vec.dt.days*24+diff_vec.dt.seconds/3600
+                diff_vec_hrs = diff_vec.dt.days*24+diff_vec.dt.seconds/3600
                 
-                # any time differences < 1?
-                min_time_diff = np.nanmin(diff_vec)
-                if min_time_diff<=1:
-                    print('Minimale Zeitdifferenz: '+ str(min_time_diff)+' Stunden')
+                # what minutes are recorded in time stamps?
+                minutes = time_vec.dt.minute
+                if len(set(minutes))>1:
+                    print('Wechsel in Aufnahmeminute: \n')
+                    n_minutes= minutes.to_frame().groupby('TIME_VALUE').size()
+                    print(n_minutes/len(time_vec))
                 
                 # maximum time difference
-                max_time_diff = np.nanmax(diff_vec)
-                print('Maximale Zeitdifferenz: '+ str(max_time_diff)+' Stunden')
+                max_time_diff = np.nanmax(diff_vec_hrs)
+                print('Maximale Zeitdifferenz: '+"%0.2f" %max_time_diff+' Stunden')
                 # plot series of time differences
                 plt.plot(diff_vec, '+')
                 plt.gca().set_yscale('log')
                 
-                #plot histogram
+                #make boxplots
                 
                 #Lagemaße Verteilung der zeitl. Differenzen
         all_axes.append(tuple(station_axes))
@@ -199,8 +201,9 @@ def plot_gaps():
     plt.yticks(fontsize= fs)
     plt.xticks(fontsize=fs)
     fig.savefig(savefigpath, bbox_inches=bbox_inches)        
+
 def main():
     for s in stations:
         for p in params:
             statistics(stname=s, paracode=p)
-plot_coverage()
+plot_gaps()
