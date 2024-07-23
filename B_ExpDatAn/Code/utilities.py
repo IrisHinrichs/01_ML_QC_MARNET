@@ -38,3 +38,23 @@ def read_station_data(filestr):
     data = pd.read_csv(filestr, index_col='TIME_VALUE', usecols=usecols)
     data.index = pd.to_datetime(data.index)
     return data
+
+def diff_time_vec(dtindex):
+    '''
+    Differences between values in a series of time stamps
+    Parameters
+    ----------
+    dtindex : pandas.core.indexes.datetimes.DatetimeIndex
+        Datetime index containing the time stamps of the time series
+
+    Returns
+    -------
+    diff_ts : pandas.core.series.Series
+        Series containing the temporal differences in hours and the 
+        corresponding index as time stamps
+
+    '''
+    tseries = pd.Series(dtindex, index=dtindex)
+    diff_ts = tseries.diff()
+    diff_ts = diff_ts.dt.days*24+diff_ts.dt.seconds/3600
+    return diff_ts
