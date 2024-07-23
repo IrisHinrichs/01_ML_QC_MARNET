@@ -177,6 +177,9 @@ def analyze_gaps():
     print(' ')
     print('Maximale Zeitdifferenzen in Tagen:')
     print([m/24 for m in sorted(list(set(all_max_time_diff)),reverse=True)])
+    print(' ')
+    print('Minimale Zeitdifferenzen in Stunden:')
+    print(sorted(list(set(all_min_time_diff)),reverse=True))
 
                
 def main():
