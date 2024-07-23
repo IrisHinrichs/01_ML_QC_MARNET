@@ -122,28 +122,22 @@ def plot_coverage():
     fig.savefig(savefigpath, bbox_inches=bbox_inches)        
     return
 
-def plot_gaps():
-    # variables related to figure
-    plt.rcParams['figure.figsize'][1]=10*cm
-    fig = plt.figure(layout=layout)
-    savefigpath = '../Figures/data_gaps.png'
-    marker = [['1','v','P','s'], ['2', '^','*',  'D']]
-    msize=7
-    fillst= 'full'
-    colors = ['blue', 'purple']
+def analyze_gaps():
+    '''
+    Analyzes temporal gaps in the MARNET time series data
+
+    Returns
+    -------
+    None.
+
+    '''
+    all_max_time_diff= []
+    all_min_time_diff = []
     
-    # maximum possible length of time series
-    startts = tlims[0]
-    stopts = tlims[1]
-    max_ts_length = len(pd.date_range(start=startts, end=stopts, freq='H'))
-    counter_s = -1
-    all_axes = []
+    # variables for definition of subplots
+   
     for s in stations:
-        station_axes = []
-        counter_s+=1
-        counter_p = -1
         for p in params:
-            counter_p+=1
             filestring = get_filestring(s,p,)
             file = datapath+filestring
             print(filestring)
@@ -151,59 +145,42 @@ def plot_gaps():
             data = read_station_data(file)
             unique_d=list(set(data.Z_LOCATION))
             unique_d.sort(reverse=True)
+            unique_t =  pd.Series(data.index.unique())
+            # what minutes are recorded in time stamps?
+            minutes = unique_t.dt.minute
+            if len(set(minutes))>1:
+                print('Wechsel in Aufnahmeminute: \n')
+                n_minutes= minutes.to_frame().groupby('TIME_VALUE').size()
+                print(n_minutes/len(unique_t))
+            
             for d in unique_d:
+                print('Tiefenstufe '+ str(abs(d))+' m')
                 # get vector with time stamps
                 time_vec = pd.Series(data[data['Z_LOCATION']==d].index)
                 diff_vec = time_vec.diff()
                 # time difference between neighbouring observations in hours
                 diff_vec_hrs = diff_vec.dt.days*24+diff_vec.dt.seconds/3600
                 
-                # what minutes are recorded in time stamps?
-                minutes = time_vec.dt.minute
-                if len(set(minutes))>1:
-                    print('Wechsel in Aufnahmeminute: \n')
-                    n_minutes= minutes.to_frame().groupby('TIME_VALUE').size()
-                    print(n_minutes/len(time_vec))
-                
                 # maximum time difference
                 max_time_diff = np.nanmax(diff_vec_hrs)
                 print('Maximale Zeitdifferenz: '+"%0.2f" %max_time_diff+' Stunden')
-                # plot series of time differences
-                plt.plot(diff_vec, '+')
-                plt.gca().set_yscale('log')
                 
-                #make boxplots
+                # minimum time difference
+                min_time_diff = np.nanmin(diff_vec_hrs)
+                print('Minimale Zeitdifferenz: '+"%0.2f" %min_time_diff+' Stunden')
                 
-                #Lagemaße Verteilung der zeitl. Differenzen
-        all_axes.append(tuple(station_axes))
-            
-    plt.title('Zeitliche Abdeckung', fontsize=fs)
-    
-    # get current yticklabel locations
-    yticklocs = plt.gca().get_yticks()
-    yticklabels = plt.gca().get_yticklabels()
-    yticklabels = [l._text.replace(chr(8722), '') for l in yticklabels]
- 
-    
-    # set xlims, ylims, labels
-    plt.ylim((-39,1))
-    plt.ylabel('Wassertiefe [m]')
-    plt.xlabel('Abdeckung [%]')
-    plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
+                all_max_time_diff.append(max_time_diff)
+                all_min_time_diff.append(min_time_diff)
+                
+    print('Maximale Zeitdifferenzen in Stunden:')
+    print(sorted(list(set(all_max_time_diff)),reverse=True))
+    print(' ')
+    print('Maximale Zeitdifferenzen in Tagen:')
+    print([m/24 for m in sorted(list(set(all_max_time_diff)),reverse=True)])
 
-    plt.grid()
-    plt.show()
-    
-    plt.legend(all_axes,list(stationsdict.values()),
-               handler_map={tuple: HandlerTuple(ndivide=None)})
-    
-    # customize axes labels etc.
-    plt.yticks(fontsize= fs)
-    plt.xticks(fontsize=fs)
-    fig.savefig(savefigpath, bbox_inches=bbox_inches)        
-
+               
 def main():
     for s in stations:
         for p in params:
             statistics(stname=s, paracode=p)
-plot_gaps()
+analyze_gaps()
