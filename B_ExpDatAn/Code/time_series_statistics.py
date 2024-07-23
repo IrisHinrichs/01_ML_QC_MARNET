@@ -8,7 +8,7 @@ import datetime as dt
 import time
 import numpy as np
 import pandas as pd
-from utilities import read_station_data, get_filestring
+from utilities import read_station_data, get_filestring, diff_time_vec
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
 
@@ -156,10 +156,11 @@ def analyze_gaps():
             for d in unique_d:
                 print('Tiefenstufe '+ str(abs(d))+' m')
                 # get vector with time stamps
-                time_vec = pd.Series(data[data['Z_LOCATION']==d].index)
-                diff_vec = time_vec.diff()
+                # time_vec = pd.Series(data[data['Z_LOCATION']==d].index, 
+                #                      index = data[data['Z_LOCATION']==d].index)
+                #diff_vec = time_vec.diff(data[data['Z_LOCATION']==d].index)
                 # time difference between neighbouring observations in hours
-                diff_vec_hrs = diff_vec.dt.days*24+diff_vec.dt.seconds/3600
+                diff_vec_hrs = diff_time_vec()
                 
                 # maximum time difference
                 max_time_diff = np.nanmax(diff_vec_hrs)
@@ -172,6 +173,10 @@ def analyze_gaps():
                 all_max_time_diff.append(max_time_diff)
                 all_min_time_diff.append(min_time_diff)
                 
+                # maximum time span with observations
+                # depends on tolerance of time delta
+                timedelta = 1
+                time_gaps=diff_vec_hrs[diff_vec_hrs>timedelta]
     print('Maximale Zeitdifferenzen in Stunden:')
     print(sorted(list(set(all_max_time_diff)),reverse=True))
     print(' ')
