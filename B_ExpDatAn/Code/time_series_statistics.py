@@ -152,7 +152,7 @@ def analyze_gaps():
                 print('Wechsel in Aufnahmeminute: \n')
                 n_minutes= minutes.to_frame().groupby('TIME_VALUE').size()
                 print(n_minutes/len(unique_t))
-            
+            depth_max_tspans=pd.DataFrame(columns= ['MIN_TIME_DELTA','DURATION', 'START'], index=unique_d)
             for d in unique_d:
                 print('Tiefenstufe '+ str(abs(d))+' m')
                 
@@ -208,12 +208,19 @@ def analyze_gaps():
                         tspans[old_end_gap]=tspan
                         old_end_gap = end_gap 
                     
-                    maxval= max(tspans)                               
+                    maxval= max(tspans) 
+                    
+                    # max time spans for all time deltas, converges at specific time delta                              
                     max_tspans.loc[tdel][:]=[maxval, tspans[tspans==maxval].index[0]]
                     
-                    # find out minimum time delta between 0 and 24 hours
-                    # corresponding to maximum time span
-                    max_tspans[max_tspans==max(max_tspans)].index[0]
+                # find out minimum time delta between 0 and 24 hours
+                # corresponding to maximum time span
+                ind = max_tspans[max_tspans.DURATION==max(max_tspans.DURATION)].index[0]
+                depth_max_tspans.loc[d] = [ind, #MIN_TIME_DELTA
+                                           max_tspans.DURATION.loc[ind],# DURATION
+                                           max_tspans.START.loc[ind]]# START
+            print(depth_max_tspans)
+                                           
     print('Maximale Zeitdifferenzen in Stunden:')
     print(sorted(list(set(all_max_time_diff)),reverse=True))
     print(' ')
