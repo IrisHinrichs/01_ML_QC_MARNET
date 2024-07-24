@@ -209,7 +209,7 @@ def analyze_gaps():
                         old_end_gap = end_gap 
                     
                     maxval= max(tspans)                               
-                    max_tspans[tdel]=[maxval, tspans[tspans==maxval].index]
+                    max_tspans.loc[tdel][:]=[maxval, tspans[tspans==maxval].index[0]]
                     
                     # find out minimum time delta between 0 and 24 hours
                     # corresponding to maximum time span
