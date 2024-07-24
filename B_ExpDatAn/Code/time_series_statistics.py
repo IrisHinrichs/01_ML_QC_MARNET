@@ -155,12 +155,12 @@ def analyze_gaps():
             
             for d in unique_d:
                 print('Tiefenstufe '+ str(abs(d))+' m')
+                
                 # get vector with time stamps
-                # time_vec = pd.Series(data[data['Z_LOCATION']==d].index, 
-                #                      index = data[data['Z_LOCATION']==d].index)
-                #diff_vec = time_vec.diff(data[data['Z_LOCATION']==d].index)
+                time_vec = time_vec = data[data['Z_LOCATION']==d].index
+                
                 # time difference between neighbouring observations in hours
-                diff_vec_hrs = diff_time_vec()
+                diff_vec_hrs = diff_time_vec(data[data['Z_LOCATION']==d].index)
                 
                 # maximum time difference
                 max_time_diff = np.nanmax(diff_vec_hrs)
@@ -175,8 +175,45 @@ def analyze_gaps():
                 
                 # maximum time span with observations
                 # depends on tolerance of time delta
-                timedelta = 1
-                time_gaps=diff_vec_hrs[diff_vec_hrs>timedelta]
+                timedelta = range(1,25)
+                # list of all maximum time spans together
+                # with start date
+                # of current time series
+                # depending on timedelta
+                max_tspans = pd.DataFrame(columns=[ 'DURATION', 'START'], index=timedelta) 
+                                         
+                for tdel in timedelta:
+                    time_gaps=diff_vec_hrs[diff_vec_hrs>tdel] # all time gaps greater than tdel
+                    
+                    # get time spans, iterate over all gaps
+                    tspans = pd.Series() # list of all time spans for current definition of time gap
+                                # and current time series
+                    old_end_gap = time_vec[0]
+                    for counter_tg in range(0, len(time_gaps.index)):
+                        # Index marking end of big gap in time vector
+                        ii = list(time_vec).index(time_gaps.index[counter_tg])
+                        
+                        # time stamp of beginning and end of big gap in time vector
+                        start_gap=time_vec[ii-1]
+                        end_gap = time_vec[ii]
+                        
+                        # distinguish between first, last and inbetween gap
+                        if counter_tg==0: # first gap
+                            tspan= start_gap-time_vec[0]
+                        elif counter_tg==len(time_gaps.index)-1: # last gap
+                            tspan= time_vec[-1]-end_gap
+                        else: # inbetween gap
+                            tspan = start_gap-old_end_gap
+                           
+                        tspans[old_end_gap]=tspan
+                        old_end_gap = end_gap 
+                    
+                    maxval= max(tspans)                               
+                    max_tspans[tdel]=[maxval, tspans[tspans==maxval].index]
+                    
+                    # find out minimum time delta between 0 and 24 hours
+                    # corresponding to maximum time span
+                    max_tspans[max_tspans==max(max_tspans)].index[0]
     print('Maximale Zeitdifferenzen in Stunden:')
     print(sorted(list(set(all_max_time_diff)),reverse=True))
     print(' ')
