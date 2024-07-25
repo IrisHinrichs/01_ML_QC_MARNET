@@ -15,6 +15,8 @@ from matplotlib.legend_handler import HandlerTuple
 from common_variables import datapath, layout, cm, stations, stationsdict,\
     params, paramdict, tlims, fs, fontdict, bbox_inches
     
+import os
+    
 
 def statistics(stname='North Sea Buoy II', paracode='WT', dlevels='all', 
             start=tlims[0], end=tlims[1]):
@@ -131,30 +133,63 @@ def analyze_gaps():
     None.
 
     '''
+    
+    # General collection of maximum time gap length 
+    # of all time series
     all_max_time_diff= []
     all_min_time_diff = []
     
-    # variables for definition of subplots
+    
    
     for s in stations:
+        # path for data storage
+        savepath = '../Results/'+s+'/'
+        if not os.path.exists(savepath):
+            os.makedirs(savepath)
         for p in params:
+            
+            # savestring for data storage
+            # max time spans as function of 
+            # time delta defining data gaps to be ingored
+            savestringtstd =savepath +p+'_time_spans_deltas_'+s+'.csv'
+            # change in minutes of sampling scheme
+            savestringmints= savepath +p+'_sampling_scheme_'+s+'.csv'
+            
             filestring = get_filestring(s,p,)
             file = datapath+filestring
             print(filestring)
+            
+            # read data
             file = datapath+filestring
             data = read_station_data(file)
+            
+            # get list of unique depth levels
             unique_d=list(set(data.Z_LOCATION))
             unique_d.sort(reverse=True)
+            depth_index = [abs(d) for d in unique_d]
+            
+            # get unique time stamps
             unique_t =  pd.Series(data.index.unique())
+            
             # what minutes are recorded in time stamps?
             minutes = unique_t.dt.minute
             if len(set(minutes))>1:
-                print('Wechsel in Aufnahmeminute: \n')
+                #print('Wechsel in Aufnahmeminute: \n')
                 n_minutes= minutes.to_frame().groupby('TIME_VALUE').size()
-                print(n_minutes/len(unique_t))
-            depth_max_tspans=pd.DataFrame(columns= ['MIN_TIME_DELTA','DURATION', 'START'], index=unique_d)
+                #print(n_minutes/len(unique_t))
+                mints_fracs = (n_minutes/len(unique_t))
+                mints_fracs.name='temporal fraction'
+                mints_fracs.to_csv(savestringmints, sep= ';', index_label= 'minute')
+                
+            # initialize DataFrame for saving the trade-off between maximum time span
+            # and minimum length of gaps being ignored
+            depth_max_tspans=pd.DataFrame(columns= ['MIN_TIME_DELTA','DURATION', 'START'], index=depth_index)
             for d in unique_d:
-                print('Tiefenstufe '+ str(abs(d))+' m')
+                # filestring for data storage
+                savestringts =savepath +p+'_'+str(abs(d))+'_max_time_spans_'+s+'.csv'
+                
+                
+                #print('Tiefenstufe '+ str(abs(d))+' m')
                 
                 # get vector with time stamps
                 time_vec = time_vec = data[data['Z_LOCATION']==d].index
@@ -164,11 +199,11 @@ def analyze_gaps():
                 
                 # maximum time difference
                 max_time_diff = np.nanmax(diff_vec_hrs)
-                print('Maximale Zeitdifferenz: '+"%0.2f" %max_time_diff+' Stunden')
+                #print('Maximale Zeitdifferenz: '+"%0.2f" %max_time_diff+' Stunden')
                 
                 # minimum time difference
                 min_time_diff = np.nanmin(diff_vec_hrs)
-                print('Minimale Zeitdifferenz: '+"%0.2f" %min_time_diff+' Stunden')
+               # print('Minimale Zeitdifferenz: '+"%0.2f" %min_time_diff+' Stunden')
                 
                 all_max_time_diff.append(max_time_diff)
                 all_min_time_diff.append(min_time_diff)
@@ -176,18 +211,21 @@ def analyze_gaps():
                 # maximum time span with observations
                 # depends on tolerance of time delta
                 timedelta = range(1,25)
-                # list of all maximum time spans together
-                # with start date
-                # of current time series
+                
+                # list of all maximum time spans together with 
+                # start date of current time series
                 # depending on timedelta
                 max_tspans = pd.DataFrame(columns=[ 'DURATION', 'START'], index=timedelta) 
                                          
                 for tdel in timedelta:
+                    
+                    # => could go into separate function 'find_all_time_spans' <= #
                     time_gaps=diff_vec_hrs[diff_vec_hrs>tdel] # all time gaps greater than tdel
                     
                     # get time spans, iterate over all gaps
-                    tspans = pd.Series() # list of all time spans for current definition of time gap
-                                # and current time series
+                    tspans = pd.Series(dtype='float64') # list of duration of all time spans 
+                                                        # for current definition of time gap
+                                                        # and current time series, index: beginning of time span
                     old_end_gap = time_vec[0]
                     for counter_tg in range(0, len(time_gaps.index)):
                         # Index marking end of big gap in time vector
@@ -207,19 +245,27 @@ def analyze_gaps():
                            
                         tspans[old_end_gap]=tspan
                         old_end_gap = end_gap 
-                    
+                    # => end of possible function 'find_all_time_spans', return pd.Series 'tspans' <= # 
                     maxval= max(tspans) 
                     
                     # max time spans for all time deltas, converges at specific time delta                              
-                    max_tspans.loc[tdel][:]=[maxval, tspans[tspans==maxval].index[0]]
+                    max_tspans.loc[tdel][:]=[
+                                                maxval, # DURATION
+                                                tspans[tspans==maxval].index[0]#START
+                                             ]
+                # save data, maximum time spans as function of timedelta
+                max_tspans.to_csv(savestringts,sep=';', index_label='time delta')
+                
                     
                 # find out minimum time delta between 0 and 24 hours
                 # corresponding to maximum time span
                 ind = max_tspans[max_tspans.DURATION==max(max_tspans.DURATION)].index[0]
-                depth_max_tspans.loc[d] = [ind, #MIN_TIME_DELTA
+                depth_max_tspans.loc[abs(d)] = [ind, #MIN_TIME_DELTA
                                            max_tspans.DURATION.loc[ind],# DURATION
                                            max_tspans.START.loc[ind]]# START
-            print(depth_max_tspans)
+            # save data, trade-off between maximum time span
+            # and minimum gap length of gaps being ignored 
+            depth_max_tspans.to_csv(savestringtstd, sep=';', index_label='depth level')
                                            
     print('Maximale Zeitdifferenzen in Stunden:')
     print(sorted(list(set(all_max_time_diff)),reverse=True))
