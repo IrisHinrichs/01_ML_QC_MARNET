@@ -93,7 +93,7 @@ def plot_coverage():
             
             # fraction of time series len
             ts_frac = data.groupby('Z_LOCATION').count()/max_ts_length*100
-            ax = plt.plot(ts_frac['DATA_VALUE'], ts_frac.index, marker[counter_s], markersize=msize,
+            ax = plt.plot(ts_frac['DATA_VALUE'], ts_frac.index,marker[counter_p][counter_s], markersize=msize,
                      fillstyle=fillst, color=colors[counter_p])
             station_axes.append(ax[0])
         all_axes.append(tuple(station_axes))
@@ -254,7 +254,7 @@ def analyze_gaps():
                                                 tspans[tspans==maxval].index[0]#START
                                              ]
                 # save data, maximum time spans as function of timedelta
-                max_tspans.to_csv(savestringts,sep=';', index_label='time delta')
+                max_tspans.to_csv(savestringts,sep=';', index_label='time_delta')
                 
                     
                 # find out minimum time delta between 0 and 24 hours
@@ -276,9 +276,85 @@ def analyze_gaps():
     print('Minimale Zeitdifferenzen in Stunden:')
     print(sorted(list(set(all_min_time_diff)),reverse=True))
 
+def plot_max_time_spans():
+    # variables related to figure
+    plt.rcParams['figure.figsize'][1]=10*cm
+    fig = plt.figure(layout=layout)
+    savefigpath = '../Figures/max_time_spans.png'
+    marker = [['1','v','P','s'], ['2', '^','*',  'D']]
+    msize=7
+    fillst= 'full'
+    colors = ['blue', 'purple']
+    
+    # maximum possible length of time series
+    startts = tlims[0]
+    stopts = tlims[1]
+    max_ts_length = len(pd.date_range(start=startts, end=stopts, freq='H'))
+    counter_s = -1
+    all_axes = []
+    
+    # path to files with results from analyze data_gaps
+    resultpath = '../Results/'
+    for s in stations:
+        station_axes = []
+        counter_s+=1
+        counter_p = -1
+        stname = '_'.join(s.split(' '))
+        for p in params:
+            counter_p+=1
+            curr_dir = resultpath+stname+'/'
+            for f in os.listdir(curr_dir):
+                if f[0:2]==p and 'max_time_spans' in f:
+                    print(f)
+                    # get depth level
+                    ff = f.split('_')
+                    d = float(ff[1])*-1
+                    data = pd.read_csv(curr_dir+f, sep=';', index_col='time_delta')
+                    
+                    # convert string stating temporal duration to integer of hours
+                    dur_raw = data.loc[1].DURATION
+                    dur_vals = dur_raw.split(' ')
+                    days = int(dur_vals[0])
+                    hours = int(dur_vals[2][0:2])
+                    dur_hours =days*24+hours
+                    dur_hours_frac= dur_hours/max_ts_length
+                    
+                    ax = plt.plot(dur_hours_frac, d, marker[counter_p][counter_s], markersize=msize,
+                             fillstyle=fillst, color=colors[counter_p])
+
+            station_axes.append(ax[0])
+        all_axes.append(tuple(station_axes))
+            
+    plt.title('Längste Zeitspanne zusammenhängender Beobachtungen', fontsize=fs)
+    
+    # get current yticklabel locations
+    yticklocs = plt.gca().get_yticks()
+    yticklabels = plt.gca().get_yticklabels()
+    yticklabels = [l._text.replace(chr(8722), '') for l in yticklabels]
+ 
+    
+    # set xlims, ylims, labels
+    plt.ylim((-39,1))
+    plt.ylabel('Wassertiefe [m]')
+    plt.xlabel('Anteilige Länge [%]')
+    plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
+
+    plt.grid()
+    plt.show()
+    
+    plt.legend(all_axes,list(stationsdict.values()),
+               handler_map={tuple: HandlerTuple(ndivide=None)})
+    
+    # customize axes labels etc.
+    plt.yticks(fontsize= fs)
+    plt.xticks(fontsize=fs)
+    fig.savefig(savefigpath, bbox_inches=bbox_inches)        
+    return
                
 def main():
     for s in stations:
         for p in params:
             statistics(stname=s, paracode=p)
-analyze_gaps()
+#plot_coverage()
+#analyze_gaps()
+plot_max_time_spans()
