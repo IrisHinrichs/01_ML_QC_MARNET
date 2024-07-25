@@ -143,7 +143,7 @@ def analyze_gaps():
    
     for s in stations:
         # path for data storage
-        savepath = '../Results/'+s+'/'
+        savepath = '../Results/'+'_'.join(s.split(' '))+'/'
         if not os.path.exists(savepath):
             os.makedirs(savepath)
         for p in params:
@@ -151,9 +151,9 @@ def analyze_gaps():
             # savestring for data storage
             # max time spans as function of 
             # time delta defining data gaps to be ingored
-            savestringtstd =savepath +p+'_time_spans_deltas_'+s+'.csv'
+            savestringtstd =savepath +p+'_time_spans_deltas_'+'_'.join(s.split(' '))+'.csv'
             # change in minutes of sampling scheme
-            savestringmints= savepath +p+'_sampling_scheme_'+s+'.csv'
+            savestringmints= savepath +p+'_sampling_scheme_'+'_'.join(s.split(' '))+'.csv'
             
             filestring = get_filestring(s,p,)
             file = datapath+filestring
@@ -186,7 +186,7 @@ def analyze_gaps():
             depth_max_tspans=pd.DataFrame(columns= ['MIN_TIME_DELTA','DURATION', 'START'], index=depth_index)
             for d in unique_d:
                 # filestring for data storage
-                savestringts =savepath +p+'_'+str(abs(d))+'_max_time_spans_'+s+'.csv'
+                savestringts =savepath +p+'_'+str(abs(d))+'_max_time_spans_'+'_'.join(s.split(' '))+'.csv'
                 
                 
                 #print('Tiefenstufe '+ str(abs(d))+' m')
