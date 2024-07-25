@@ -276,11 +276,10 @@ def analyze_gaps():
     print('Minimale Zeitdifferenzen in Stunden:')
     print(sorted(list(set(all_min_time_diff)),reverse=True))
 
-def plot_max_time_spans():
+def plot_max_time_spans(time_delta=False):
     # variables related to figure
     plt.rcParams['figure.figsize'][1]=10*cm
     fig = plt.figure(layout=layout)
-    savefigpath = '../Figures/max_time_spans.png'
     marker = [['1','v','P','s'], ['2', '^','*',  'D']]
     msize=7
     fillst= 'full'
@@ -295,6 +294,12 @@ def plot_max_time_spans():
     
     # path to files with results from analyze data_gaps
     resultpath = '../Results/'
+    if time_delta:
+        fstring = 'time_spans_deltas'
+        savefigpath = '../Figures/max_time_spans_deltas.png'
+    else:
+        fstring = 'max_time_spans'
+        savefigpath = '../Figures/max_time_spans.png'
     for s in stations:
         station_axes = []
         counter_s+=1
@@ -304,52 +309,130 @@ def plot_max_time_spans():
             counter_p+=1
             curr_dir = resultpath+stname+'/'
             for f in os.listdir(curr_dir):
-                if f[0:2]==p and 'max_time_spans' in f:
+                if f[0:2]==p and fstring in f:
                     print(f)
-                    # get depth level
-                    ff = f.split('_')
-                    d = float(ff[1])*-1
-                    data = pd.read_csv(curr_dir+f, sep=';', index_col='time_delta')
                     
-                    # convert string stating temporal duration to integer of hours
-                    dur_raw = data.loc[1].DURATION
-                    dur_vals = dur_raw.split(' ')
-                    days = int(dur_vals[0])
-                    hours = int(dur_vals[2][0:2])
-                    dur_hours =days*24+hours
-                    dur_hours_frac= dur_hours/max_ts_length
-                    
-                    ax = plt.plot(dur_hours_frac, d, marker[counter_p][counter_s], markersize=msize,
-                             fillstyle=fillst, color=colors[counter_p])
-
+                    if time_delta:
+                        data = pd.read_csv(curr_dir+f, sep=';', index_col='depth level')
+                        
+                        # get depth levels
+                        depth_levels= [dd*-1 for dd in data.index]
+                        
+                        dur_hours_frac= [convert_duration_string(dh)/max_ts_length for dh in data.DURATION]
+                        
+                        spl1 = plt.subplot(1,2,1)
+                        plt.plot(dur_hours_frac, depth_levels, marker[counter_p][counter_s], markersize=msize,
+                                 fillstyle=fillst, color=colors[counter_p])
+                        spl2 = plt.subplot(1,2,2)
+                        ax= plt.plot(data.MIN_TIME_DELTA, depth_levels, marker[counter_p][counter_s], markersize=msize,
+                                 fillstyle=fillst, color=colors[counter_p])
+                    else:
+                        # get depth level
+                        ff = f.split('_')
+                        d = float(ff[1])*-1
+                        data = pd.read_csv(curr_dir+f, sep=';', index_col='time_delta')
+                        # convert string stating temporal duration to integer of hours
+                        dur_raw = data.loc[1].DURATION
+                        
+                        dur_hours=convert_duration_string(dur_raw)
+                        dur_hours_frac= dur_hours/max_ts_length
+                        
+                        ax = plt.plot(dur_hours_frac, d, marker[counter_p][counter_s], markersize=msize,
+                                 fillstyle=fillst, color=colors[counter_p])
+                        
             station_axes.append(ax[0])
         all_axes.append(tuple(station_axes))
-            
-    plt.title('Längste Zeitspanne zusammenhängender Beobachtungen', fontsize=fs)
+        
     
-    # get current yticklabel locations
-    yticklocs = plt.gca().get_yticks()
-    yticklabels = plt.gca().get_yticklabels()
-    yticklabels = [l._text.replace(chr(8722), '') for l in yticklabels]
- 
+    if time_delta:
+        
+        # subplot #1
+        plt.subplot(1,2,1)
+        plt.title('Längste Zeitspanne zusammenhängender Beobachtungen', fontsize=fs)
+        
+        # get current yticklabel locations
+        yticklocs = plt.gca().get_yticks()
+        yticklabels = plt.gca().get_yticklabels()
+        yticklabels = [l._text.replace(chr(8722), '') for l in yticklabels]
+     
+        
+        # set xlims, ylims, labels
+        plt.ylim((-39,1))
+        plt.ylabel('Wassertiefe [m]')
+        plt.xlabel('Anteilige Länge [%]')
+        plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
     
-    # set xlims, ylims, labels
-    plt.ylim((-39,1))
-    plt.ylabel('Wassertiefe [m]')
-    plt.xlabel('Anteilige Länge [%]')
-    plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
-
-    plt.grid()
-    plt.show()
+        plt.grid()
+        
+        plt.legend(all_axes,list(stationsdict.values()),
+                   handler_map={tuple: HandlerTuple(ndivide=None)})
+        
+        # customize axes labels etc.
+        plt.yticks(fontsize= fs)
+        plt.xticks(fontsize=fs)
+        
+        # subplot #2
+        plt.subplot(1,2,2)
+        plt.title('Minimale Länge ignorierter zeitl. Lücken', fontsize=fs)
+        
+       
+        # set xlims, ylims, labels
+        plt.ylim((-39,1))
+        plt.ylabel('')
+        plt.xlabel('Länge [Stunden]')
+        plt.gca().set_yticks([])
     
-    plt.legend(all_axes,list(stationsdict.values()),
-               handler_map={tuple: HandlerTuple(ndivide=None)})
+        plt.grid()
+        
+        # customize axes labels etc.
+        plt.yticks(fontsize= fs)
+    else:
+        
+        plt.title('Längste Zeitspanne zusammenhängender Beobachtungen', fontsize=fs)
+        
+        # get current yticklabel locations
+        yticklocs = plt.gca().get_yticks()
+        yticklabels = plt.gca().get_yticklabels()
+        yticklabels = [l._text.replace(chr(8722), '') for l in yticklabels]
+     
+        
+        # set xlims, ylims, labels
+        plt.ylim((-39,1))
+        plt.ylabel('Wassertiefe [m]')
+        plt.xlabel('Anteilige Länge [%]')
+        plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
     
-    # customize axes labels etc.
-    plt.yticks(fontsize= fs)
-    plt.xticks(fontsize=fs)
+        plt.grid()
+        plt.show()
+        
+        plt.legend(all_axes,list(stationsdict.values()),
+                   handler_map={tuple: HandlerTuple(ndivide=None)})
+        
+        # customize axes labels etc.
+        plt.yticks(fontsize= fs)
+        plt.xticks(fontsize=fs)
     fig.savefig(savefigpath, bbox_inches=bbox_inches)        
     return
+def convert_duration_string(dur_raw='263 days 21:00:00'):
+    '''
+    Convert string stating temporal duration to integer of hours
+
+    Parameters
+    ----------
+    dur_raw : str, 
+        String stating the days, hours, minutes and seconds of the duration. The default is '263 days 21:00:00'.
+
+    Returns
+    -------
+    dur_hours : int
+        Duration in hours.
+
+    '''
+    dur_vals = dur_raw.split(' ')
+    days = int(dur_vals[0])
+    hours = int(dur_vals[2][0:2])
+    dur_hours =days*24+hours
+    return dur_hours
                
 def main():
     for s in stations:
@@ -357,4 +440,4 @@ def main():
             statistics(stname=s, paracode=p)
 #plot_coverage()
 #analyze_gaps()
-plot_max_time_spans()
+plot_max_time_spans(time_delta=True)
