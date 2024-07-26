@@ -219,7 +219,7 @@ def analyze_gaps():
                                          
                 for tdel in timedelta:
                     # find time all time intervalls between temporal gaps defined by tdel
-                    tspans = find_all_time_spans(diff_vec_hrs,tdel) 
+                    tspans = find_all_time_spans(time_vec,tdel) 
                    
                     maxval= max(tspans) 
                     
@@ -290,11 +290,11 @@ def plot_max_time_spans(time_delta=False):
                     if time_delta:
                         data = pd.read_csv(curr_dir+f, sep=';', index_col='time_delta')
                         
-                        dur_hours_frac= [convert_duration_string(dh)/max_ts_length for dh in data.DURATION]
+                        dur_hours_frac= [convert_duration_string(dh)/max_ts_length*100 for dh in data.DURATION]
                         
                         #plt.subplot(1,2,1)
-                        ax = plt.plot(data.index,dur_hours_frac, '-'+marker[counter_p][counter_s], markersize=msize,
-                                 fillstyle=fillst, color=colors[counter_p])
+                        ax = plt.plot(data.index,dur_hours_frac, '-'+marker[counter_p][counter_s], markersize=5,
+                                 fillstyle=fillst, color=colors[counter_p], linewidth=0.5)
                         # plt.subplot(1,2,2)
                         # ax= plt.plot(data.MIN_TIME_DELTA, depth_levels, marker[counter_p][counter_s], markersize=msize,
                         #          fillstyle=fillst, color=colors[counter_p])
@@ -307,7 +307,7 @@ def plot_max_time_spans(time_delta=False):
                         dur_raw = data.loc[1].DURATION
                         
                         dur_hours=convert_duration_string(dur_raw)
-                        dur_hours_frac= dur_hours/max_ts_length
+                        dur_hours_frac= dur_hours/max_ts_length*100
                         
                         ax = plt.plot(dur_hours_frac, d, marker[counter_p][counter_s], markersize=msize,
                                  fillstyle=fillst, color=colors[counter_p])
@@ -320,7 +320,7 @@ def plot_max_time_spans(time_delta=False):
         
         # subplot #1
         #plt.subplot(1,2,1)
-        plt.title('Längste Zeitspanne zusammenhängender Beobachtungen', fontsize=fs)
+        plt.title('Längste Zeitspanne konsekutiver Beobachtungen', fontsize=fs)
         
         # get current yticklabel locations
         yticklocs = plt.gca().get_yticks()
@@ -329,10 +329,10 @@ def plot_max_time_spans(time_delta=False):
      
         
         # set xlims, ylims, labels
-        plt.ylim((-39,1))
+        #plt.ylim((-39,1))
         plt.ylabel('Anteilige Länge [%]')
-        plt.xlabel('Ignorierter Zeitlücke [Stunden]')
-        plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
+        plt.xlabel(r'$\Delta$t$_{tol}$ [Stunden]')
+        #plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
     
         plt.grid()
         
@@ -360,7 +360,7 @@ def plot_max_time_spans(time_delta=False):
         # plt.yticks(fontsize= fs)
     else:
         
-        plt.title('Längste Zeitspanne zusammenhängender Beobachtungen', fontsize=fs)
+        plt.title('Längste Zeitspanne konsekutiver Beobachtungen', fontsize=fs)
         
         # get current yticklabel locations
         yticklocs = plt.gca().get_yticks()
@@ -435,20 +435,26 @@ def find_all_time_spans(time_vec, tdel):
                                         # for current definition of time gap
                                         # and current time series, index: beginning of time span
     old_end_gap = time_vec[0]
-    for counter_tg in range(0, len(time_gaps.index)):
-        # Index marking end of big gap in time vector
-        ii = list(time_vec).index(time_gaps.index[counter_tg])
-        
-        # time stamp of beginning and end of big gap in time vector
-        start_gap=time_vec[ii-1]
-        end_gap = time_vec[ii]
+    for counter_tg in range(0, len(time_gaps)+1):
         
         # distinguish between first, last and inbetween gap
         if counter_tg==0: # first gap
+            # Index marking end of big gap in time vector
+            ii = list(time_vec).index(time_gaps.index[counter_tg])
+            
+            # time stamp of beginning and end of big gap in time vector
+            start_gap=time_vec[ii-1]
+            end_gap = time_vec[ii]
             tspan= start_gap-time_vec[0]
-        elif counter_tg==len(time_gaps.index)-1: # last gap
-            tspan= time_vec[-1]-end_gap
+        elif counter_tg==len(time_gaps): # last gap
+            tspan= time_vec[-1]-old_end_gap
         else: # inbetween gap
+            # Index marking end of big gap in time vector
+            ii = list(time_vec).index(time_gaps.index[counter_tg])
+            
+            # time stamp of beginning and end of big gap in time vector
+            start_gap=time_vec[ii-1]
+            end_gap = time_vec[ii]
             tspan = start_gap-old_end_gap
            
         tspans[old_end_gap]=tspan
@@ -461,10 +467,6 @@ def main():
             statistics(stname=s, paracode=p)
 #plot_coverage()
 #analyze_gaps()
-#plot_max_time_spans(time_delta=True)
+plot_max_time_spans(time_delta=True)
 
-file = get_filestring()
-data = read_station_data(datapath+file)
 
-time_vec = data[data['Z_LOCATION']==-35].index
-find_all_time_spans(time_vec, 9)
