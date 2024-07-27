@@ -148,12 +148,17 @@ def analyze_gaps():
             os.makedirs(savepath)
         for p in params:
             
-            # savestring for data storage
+            # savestrings for data storage
+            
             # max time spans as function of 
             # time delta defining data gaps to be ingored
             savestringtstd =savepath +p+'_time_spans_deltas_'+'_'.join(s.split(' '))+'.csv'
+            
             # change in minutes of sampling scheme
             savestringmints= savepath +p+'_sampling_scheme_'+'_'.join(s.split(' '))+'.csv'
+            
+            # time delta corresponding t 99.9% of cumulative distribution
+            savestringtd99p9= savepath +p+'_td99.9_'+'_'.join(s.split(' '))+'.csv'
             
             filestring = get_filestring(s,p,)
             file = datapath+filestring
@@ -184,6 +189,10 @@ def analyze_gaps():
             # initialize DataFrame for saving the trade-off between maximum time span
             # and minimum length of gaps being ignored
             depth_max_tspans=pd.DataFrame(columns= ['MIN_TIME_DELTA','DURATION', 'START'], index=depth_index)
+            
+            # initialize DataFrame for saving time delta corresponding to 99.9% of 
+            # cumulative distribution of temporal differences in time series
+            tdelta_99p9=pd.DataFrame(columns= ['TIME_DELTA_99p9'], index=depth_index)
             for d in unique_d:
                 # filestring for data storage
                 savestringts =savepath +p+'_'+str(abs(d))+'_max_time_spans_'+'_'.join(s.split(' '))+'.csv'
@@ -204,6 +213,14 @@ def analyze_gaps():
                 # minimum time difference
                 min_time_diff = np.nanmin(diff_vec_hrs)
                # print('Minimale Zeitdifferenz: '+"%0.2f" %min_time_diff+' Stunden')
+               
+                # cumulative distribution of time differences
+                dummy = diff_vec_hrs.dropna().to_frame(name='delta_t')
+                cumdistr = dummy.groupby('delta_t').size().cumsum()/len(dummy)
+                # time difference marking 99.9% of cumulative distribution
+                hr_delta_99p9 = cumdistr[cumdistr>0.999].index[0]
+                tdelta_99p9.loc[abs(d)]=hr_delta_99p9
+                
                 
                 all_max_time_diff.append(max_time_diff)
                 all_min_time_diff.append(min_time_diff)
@@ -242,6 +259,7 @@ def analyze_gaps():
             # save data, trade-off between maximum time span
             # and minimum gap length of gaps being ignored 
             depth_max_tspans.to_csv(savestringtstd, sep=';', index_label='depth level')
+            tdelta_99p9.to_csv(savestringtd99p9, sep=';', index_label='depth level')
                                            
     print('Maximale Zeitdifferenzen in Stunden:')
     print(sorted(list(set(all_max_time_diff)),reverse=True))
@@ -416,6 +434,80 @@ def plot_max_time_spans(time_delta=False, frac=False):
         plt.xticks(fontsize=fs)
     fig.savefig(savefigpath, bbox_inches=bbox_inches)        
     return
+
+def plot_td99p9():
+    '''
+    Plots the results of analyze_gaps, in this case the 0.999 quantile
+    of the temporal differences of all time series
+
+    Returns
+    -------
+    None.
+
+    '''
+    # variables related to figure
+    plt.rcParams['figure.figsize'][1]=10*cm
+    fig = plt.figure(layout=layout)
+    marker = [['1','v','P','s'], ['2', '^','*',  'D']]
+    msize=7
+    fillst= 'full'
+    colors = ['blue', 'purple']
+    all_axes = []
+    savefigpath = '../Figures/td99p9.png'
+   
+    
+    # path to files with results from analyze data_gaps
+    resultpath = '../Results/'
+    fstring = 'td99.9'
+    
+    
+    counter_s = -1
+    for s in stations:
+        station_axes = []
+        counter_s+=1
+        counter_p = -1
+        stname = '_'.join(s.split(' '))
+        for p in params:
+            counter_p+=1
+            curr_dir = resultpath+stname+'/'
+            for f in os.listdir(curr_dir):
+                if f[0:2]==p and fstring in f:
+                    print(f)
+                    data = pd.read_csv(curr_dir+f, sep=';', index_col='depth level')
+                   
+                    ax = plt.plot(data,data.index*-1, marker[counter_p][counter_s], markersize=msize,
+                             fillstyle=fillst, color=colors[counter_p])
+                        
+            station_axes.append(ax[0])
+        all_axes.append(tuple(station_axes))
+  
+    plt.title(r'0.999-Quantil der Zeitdifferenzen $\Delta$t', fontsize=fs)
+    
+    # get current yticklabel locations
+    yticklocs = plt.gca().get_yticks()
+    yticklabels = plt.gca().get_yticklabels()
+    yticklabels = [l._text.replace(chr(8722), '') for l in yticklabels]
+ 
+    
+    # set xlims, ylims, labels
+    plt.ylim((-39,1))
+    plt.ylabel('Wassertiefe [m]')
+    plt.xlabel(r'$\Delta$t$_{0.999}$ [Stunden]')
+    plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
+    plt.gca().set_xticks(range(0,21,5))
+
+    plt.grid()
+    plt.show()
+    
+    plt.legend(all_axes,list(stationsdict.values()),
+               handler_map={tuple: HandlerTuple(ndivide=None)})
+    
+    # customize axes labels etc.
+    plt.yticks(fontsize= fs)
+    plt.xticks(fontsize=fs)
+    fig.savefig(savefigpath, bbox_inches=bbox_inches)        
+    return
+    
 def convert_duration_string(dur_raw='263 days 21:00:00'):
     '''
     Convert string stating temporal duration to integer of hours
@@ -498,6 +590,7 @@ def main():
             statistics(stname=s, paracode=p)
 #plot_coverage()
 #analyze_gaps()
-plot_max_time_spans(time_delta=False, frac=False)
+#plot_max_time_spans(time_delta=False, frac=False)
+plot_td99p9()
 
 
