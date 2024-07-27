@@ -252,7 +252,28 @@ def analyze_gaps():
     print('Minimale Zeitdifferenzen in Stunden:')
     print(sorted(list(set(all_min_time_diff)),reverse=True))
 
-def plot_max_time_spans(time_delta=False):
+def plot_max_time_spans(time_delta=False, frac=False):
+    '''
+    Makes figure of results of function 'analyze_gaps'
+
+    Parameters
+    ----------
+    time_delta : boolean, optional
+        If set to True results of maximum time interval with consecutive 
+        observations as function of tolerated time delta are plotted
+        If set to False, tolerated time delta corresponds to one
+        and maximum time intervals on all depth levels are presented.
+        The default is False.
+    frac : boolean, optional
+        If set to True maximum time intervals are plotted as fractional 
+        value in %. If set to false, intervals are plotted in absolute values
+        of days. The default is False.
+
+    Returns
+    -------
+    None.
+
+    '''
     # variables related to figure
     plt.rcParams['figure.figsize'][1]=10*cm
     fig = plt.figure(layout=layout)
@@ -289,9 +310,13 @@ def plot_max_time_spans(time_delta=False):
                     
                     if time_delta:
                         data = pd.read_csv(curr_dir+f, sep=';', index_col='time_delta')
-                        
-                        dur_hours_frac= [convert_duration_string(dh)/max_ts_length*100 for dh in data.DURATION]
-                        
+                        if frac:
+                            dur_hours_frac= [convert_duration_string(dh)/max_ts_length*100 for dh in data.DURATION]
+                            ylabelstr = 'Anteilige Länge [%]'
+                        else:
+                            dur_hours_frac= [convert_duration_string(dh)/24 for dh in data.DURATION]
+                            ylabelstr = 'Länge [Tage]'
+                            
                         #plt.subplot(1,2,1)
                         ax = plt.plot(data.index,dur_hours_frac, '-'+marker[counter_p][counter_s], markersize=5,
                                  fillstyle=fillst, color=colors[counter_p], linewidth=0.5)
@@ -307,7 +332,13 @@ def plot_max_time_spans(time_delta=False):
                         dur_raw = data.loc[1].DURATION
                         
                         dur_hours=convert_duration_string(dur_raw)
-                        dur_hours_frac= dur_hours/max_ts_length*100
+                        if frac:
+                            dur_hours_frac= dur_hours/max_ts_length*100
+                            ylabelstr = 'Anteilige Länge [%]'
+                        else:
+                            dur_hours_frac= dur_hours/24
+                            ylabelstr = 'Länge [Tage]'
+                        
                         
                         ax = plt.plot(dur_hours_frac, d, marker[counter_p][counter_s], markersize=msize,
                                  fillstyle=fillst, color=colors[counter_p])
@@ -330,7 +361,7 @@ def plot_max_time_spans(time_delta=False):
         
         # set xlims, ylims, labels
         #plt.ylim((-39,1))
-        plt.ylabel('Anteilige Länge [%]')
+        plt.ylabel(ylabelstr)
         plt.xlabel(r'$\Delta$t$_{tol}$ [Stunden]')
         #plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
     
@@ -371,7 +402,7 @@ def plot_max_time_spans(time_delta=False):
         # set xlims, ylims, labels
         plt.ylim((-39,1))
         plt.ylabel('Wassertiefe [m]')
-        plt.xlabel('Anteilige Länge [%]')
+        plt.xlabel(ylabelstr)
         plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
     
         plt.grid()
@@ -467,6 +498,6 @@ def main():
             statistics(stname=s, paracode=p)
 #plot_coverage()
 #analyze_gaps()
-plot_max_time_spans(time_delta=True)
+plot_max_time_spans(time_delta=False, frac=False)
 
 
