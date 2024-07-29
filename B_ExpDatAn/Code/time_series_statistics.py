@@ -159,6 +159,8 @@ def analyze_gaps():
             
             # time delta corresponding t 99.9% of cumulative distribution
             savestringtd99p9= savepath +p+'_td99.9_'+'_'.join(s.split(' '))+'.csv'
+            # time delta corresponding t 50% of cumulative distribution
+            savestringtd50= savepath +p+'_td50_'+'_'.join(s.split(' '))+'.csv'
             
             filestring = get_filestring(s,p,)
             file = datapath+filestring
@@ -192,7 +194,8 @@ def analyze_gaps():
             
             # initialize DataFrame for saving time delta corresponding to 99.9% of 
             # cumulative distribution of temporal differences in time series
-            tdelta_99p9=pd.DataFrame(columns= ['TIME_DELTA_99p9'], index=depth_index)
+            # tdelta_99p9=pd.DataFrame(columns= ['TIME_DELTA_99p9'], index=depth_index)
+            tdelta_50=pd.DataFrame(columns= ['TIME_DELTA_0p5'], index=depth_index)
             for d in unique_d:
                 # filestring for data storage
                 savestringts =savepath +p+'_'+str(abs(d))+'_max_time_spans_'+'_'.join(s.split(' '))+'.csv'
@@ -215,11 +218,13 @@ def analyze_gaps():
                # print('Minimale Zeitdifferenz: '+"%0.2f" %min_time_diff+' Stunden')
                
                 # cumulative distribution of time differences
-                dummy = diff_vec_hrs.dropna().to_frame(name='delta_t')
+                # keep only values greater than 1 hour time difference
+                vg1 = diff_vec_hrs[diff_vec_hrs>1]
+                dummy = vg1.to_frame(name='delta_t')
                 cumdistr = dummy.groupby('delta_t').size().cumsum()/len(dummy)
                 # time difference marking 99.9% of cumulative distribution
-                hr_delta_99p9 = cumdistr[cumdistr>0.999].index[0]
-                tdelta_99p9.loc[abs(d)]=hr_delta_99p9
+                hr_delta_50 = cumdistr[cumdistr>0.5].index[0]
+                tdelta_50.loc[abs(d)]=hr_delta_50
                 
                 
                 all_max_time_diff.append(max_time_diff)
@@ -259,7 +264,7 @@ def analyze_gaps():
             # save data, trade-off between maximum time span
             # and minimum gap length of gaps being ignored 
             depth_max_tspans.to_csv(savestringtstd, sep=';', index_label='depth level')
-            tdelta_99p9.to_csv(savestringtd99p9, sep=';', index_label='depth level')
+            tdelta_50.to_csv(savestringtd50, sep=';', index_label='depth level')
                                            
     print('Maximale Zeitdifferenzen in Stunden:')
     print(sorted(list(set(all_max_time_diff)),reverse=True))
@@ -435,10 +440,16 @@ def plot_max_time_spans(time_delta=False, frac=False):
     fig.savefig(savefigpath, bbox_inches=bbox_inches)        
     return
 
-def plot_td99p9():
+def plot_td(quant='50'):
     '''
     Plots the results of analyze_gaps, in this case the 0.999 quantile
     of the temporal differences of all time series
+    
+    Parameters
+    ----------
+    quant : str, optional
+            defines the quantile to be plotted, default is 50, meaning the median 
+            of the distribution of the 
 
     Returns
     -------
@@ -453,12 +464,12 @@ def plot_td99p9():
     fillst= 'full'
     colors = ['blue', 'purple']
     all_axes = []
-    savefigpath = '../Figures/td99p9.png'
+    savefigpath = '../Figures/td'+quant+'.png'
    
     
     # path to files with results from analyze data_gaps
     resultpath = '../Results/'
-    fstring = 'td99.9'
+    fstring = 'td'+quant
     
     
     counter_s = -1
@@ -481,7 +492,7 @@ def plot_td99p9():
             station_axes.append(ax[0])
         all_axes.append(tuple(station_axes))
   
-    plt.title(r'0.999-Quantil der Zeitdifferenzen $\Delta$t', fontsize=fs)
+    plt.title(r'Median der Zeitdifferenzen $\Delta$t > 1', fontsize=fs)
     
     # get current yticklabel locations
     yticklocs = plt.gca().get_yticks()
@@ -492,7 +503,7 @@ def plot_td99p9():
     # set xlims, ylims, labels
     plt.ylim((-39,1))
     plt.ylabel('Wassertiefe [m]')
-    plt.xlabel(r'$\Delta$t$_{0.999}$ [Stunden]')
+    plt.xlabel(r'$\Delta$t$_{0.5}$ [Stunden]')
     plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
     plt.gca().set_xticks(range(0,21,5))
 
@@ -591,6 +602,6 @@ def main():
 #plot_coverage()
 #analyze_gaps()
 #plot_max_time_spans(time_delta=False, frac=False)
-plot_td99p9()
+plot_td()
 
 
