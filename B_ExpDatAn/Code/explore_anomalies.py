@@ -105,7 +105,10 @@ def anomaly_exploration(stname='North Sea Buoy II', paracode='WT', dlevels='all'
     n_dp=len(df)
     
     # Find data where quality flag in validation level 3 is set to 4 or 3
-    val3_qf4 = df[df.QF3==4]+df[df.QF3==3]
+    val3_qf3_or_4 = df[df.QF3.isin([3,4])]
+    
+    # number of anomalies grouped by depth levels
+    n_anom= val3_qf3_or_4.groupby('Z_LOCATION').size()
     print(stname+', '+paracode+'\n'+
           '----------------------------------\n'+
          'Anzahl Datenpunkte ('+start.strftime('%Y%m%d')+'-'+end.strftime('%Y%m%d')+'): '+str(n_dp)+'\n')
