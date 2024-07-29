@@ -1,0 +1,128 @@
+﻿Übersicht Quality flags (erstellt mit plot_insida_timesseries.statistics)
+
+North Sea Buoy II, WT
+----------------------------------
+Anzahl Datenpunkte (20200101-20240630): 158713
+
+Validation level 1, quality flag 0: 0 (0.0000)
+Validation level 3, quality flag 0: 0 (0.0000)
+Validation level 1, quality flag 1: 0 (0.0000)
+Validation level 3, quality flag 1: 0 (0.0000)
+Validation level 1, quality flag 2: 158569 (0.9991)
+Validation level 3, quality flag 2: 157976 (0.9954)
+Validation level 1, quality flag 3: 140 (0.0009)
+Validation level 3, quality flag 3: 99 (0.0006)
+Validation level 1, quality flag 4: 4 (0.0000)
+Validation level 3, quality flag 4: 638 (0.0040)
+----------------------------------
+
+North Sea Buoy II, SZ
+----------------------------------
+Anzahl Datenpunkte (20200101-20240630): 63966
+
+Validation level 1, quality flag 0: 0 (0.0000)
+Validation level 3, quality flag 0: 0 (0.0000)
+Validation level 1, quality flag 1: 0 (0.0000)
+Validation level 3, quality flag 1: 0 (0.0000)
+Validation level 1, quality flag 2: 63680 (0.9955)
+Validation level 3, quality flag 2: 63600 (0.9943)
+Validation level 1, quality flag 3: 190 (0.0030)
+Validation level 3, quality flag 3: 166 (0.0026)
+Validation level 1, quality flag 4: 96 (0.0015)
+Validation level 3, quality flag 4: 200 (0.0031)
+----------------------------------
+
+North Sea Buoy III, WT
+----------------------------------
+Anzahl Datenpunkte (20200101-20240630): 282861
+
+Validation level 1, quality flag 0: 0 (0.0000)
+Validation level 3, quality flag 0: 0 (0.0000)
+Validation level 1, quality flag 1: 0 (0.0000)
+Validation level 3, quality flag 1: 0 (0.0000)
+Validation level 1, quality flag 2: 282666 (0.9993)
+Validation level 3, quality flag 2: 281806 (0.9963)
+Validation level 1, quality flag 3: 194 (0.0007)
+Validation level 3, quality flag 3: 177 (0.0006)
+Validation level 1, quality flag 4: 1 (0.0000)
+Validation level 3, quality flag 4: 878 (0.0031)
+----------------------------------
+
+North Sea Buoy III, SZ
+----------------------------------
+Anzahl Datenpunkte (20200101-20240630): 96719
+
+Validation level 1, quality flag 0: 0 (0.0000)
+Validation level 3, quality flag 0: 0 (0.0000)
+Validation level 1, quality flag 1: 0 (0.0000)
+Validation level 3, quality flag 1: 0 (0.0000)
+Validation level 1, quality flag 2: 96300 (0.9957)
+Validation level 3, quality flag 2: 95774 (0.9902)
+Validation level 1, quality flag 3: 362 (0.0037)
+Validation level 3, quality flag 3: 305 (0.0032)
+Validation level 1, quality flag 4: 57 (0.0006)
+Validation level 3, quality flag 4: 640 (0.0066)
+----------------------------------
+
+Kiel Lighthouse, WT
+----------------------------------
+Anzahl Datenpunkte (20200101-20240630): 167873
+
+Validation level 1, quality flag 0: 0 (0.0000)
+Validation level 3, quality flag 0: 0 (0.0000)
+Validation level 1, quality flag 1: 0 (0.0000)
+Validation level 3, quality flag 1: 0 (0.0000)
+Validation level 1, quality flag 2: 167774 (0.9994)
+Validation level 3, quality flag 2: 167767 (0.9994)
+Validation level 1, quality flag 3: 12 (0.0001)
+Validation level 3, quality flag 3: 12 (0.0001)
+Validation level 1, quality flag 4: 87 (0.0005)
+Validation level 3, quality flag 4: 94 (0.0006)
+----------------------------------
+
+Kiel Lighthouse, SZ
+----------------------------------
+Anzahl Datenpunkte (20200101-20240630): 79074
+
+Validation level 1, quality flag 0: 0 (0.0000)
+Validation level 3, quality flag 0: 0 (0.0000)
+Validation level 1, quality flag 1: 0 (0.0000)
+Validation level 3, quality flag 1: 0 (0.0000)
+Validation level 1, quality flag 2: 79030 (0.9994)
+Validation level 3, quality flag 2: 79021 (0.9993)
+Validation level 1, quality flag 3: 39 (0.0005)
+Validation level 3, quality flag 3: 25 (0.0003)
+Validation level 1, quality flag 4: 5 (0.0001)
+Validation level 3, quality flag 4: 28 (0.0004)
+----------------------------------
+Fehmarn Belt Buoy, WT
+----------------------------------
+Anzahl Datenpunkte (20200101-20240630): 104868
+
+Validation level 1, quality flag 0: 0 (0.0000)
+Validation level 3, quality flag 0: 0 (0.0000)
+Validation level 1, quality flag 1: 0 (0.0000)
+Validation level 3, quality flag 1: 0 (0.0000)
+Validation level 1, quality flag 2: 104842 (0.9998)
+Validation level 3, quality flag 2: 104577 (0.9972)
+Validation level 1, quality flag 3: 26 (0.0002)
+Validation level 3, quality flag 3: 15 (0.0001)
+Validation level 1, quality flag 4: 0 (0.0000)
+Validation level 3, quality flag 4: 276 (0.0026)
+----------------------------------
+
+Fehmarn Belt Buoy, SZ
+----------------------------------
+Anzahl Datenpunkte (20200101-20240630): 93796
+
+Validation level 1, quality flag 0: 0 (0.0000)
+Validation level 3, quality flag 0: 0 (0.0000)
+Validation level 1, quality flag 1: 0 (0.0000)
+Validation level 3, quality flag 1: 0 (0.0000)
+Validation level 1, quality flag 2: 93379 (0.9956)
+Validation level 3, quality flag 2: 91465 (0.9751)
+Validation level 1, quality flag 3: 416 (0.0044)
+Validation level 3, quality flag 3: 98 (0.0010)
+Validation level 1, quality flag 4: 1 (0.0000)
+Validation level 3, quality flag 4: 2233 (0.0238)
+----------------------------------
