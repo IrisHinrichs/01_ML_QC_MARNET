@@ -12,11 +12,16 @@ import pandas as pd
 from utilities import read_station_data, get_filestring, diff_time_vec
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
+import matplotlib as mtpl
 
 from common_variables import datapath, layout, cm, stations, stationsdict,\
     params, paramdict, tlims, fs, fontdict, bbox_inches
     
 import os
+
+# define figure height
+#plt.rcParams['figure.figsize'][1]=14*cm
+#fig = plt.figure(layout=layout)
 
 def statistics(stname='North Sea Buoy II', paracode='WT', dlevels='all', 
             start=tlims[0], end=tlims[1]):
@@ -65,11 +70,10 @@ def statistics(stname='North Sea Buoy II', paracode='WT', dlevels='all',
     print('----------------------------------\n')
     return
 
-def anomaly_exploration(stname='North Sea Buoy II', paracode='WT', dlevels='all', 
-            start=tlims[0], end=tlims[1]):
+def anomaly_exploration():
     '''
     Explore anomalies: 
-        - how many point anomalies, how many sequentiel?
+        - how many point anomalies, how many sequential?
         - anomaly after missing value?
         - anomalies on all depth levels?
         - how often difference in qf between val 1 and val 3?.
@@ -94,30 +98,153 @@ def anomaly_exploration(stname='North Sea Buoy II', paracode='WT', dlevels='all'
 
     '''
     
-    # number of possible quality flags
-    n_qfs = 4
-     # %% define path and filename
-    strings = get_filestring(stname)
-    file = datapath+strings
-    df = read_station_data(file)
+    for st in stations:
+        # path for data storage
+        savepath = '../Results/'+'_'.join(st.split(' '))+'/'
+        for p in params:
+            filestr = get_filestring(st, p)
+            print(filestr)
+            data=read_station_data(filestr=datapath+filestr)
     
-   
-    n_dp=len(df)
+            n_dp=len(data)
     
-    # Find data where quality flag in validation level 3 is set to 4 or 3
-    val3_qf3_or_4 = df[df.QF3.isin([3,4])]
+            # Find data with quality flag set to 4 or 3 in validation level 3
+            val3_qf3_or_4 = data[data.QF3.isin([3,4])]
+            
+            # number of anomalies grouped by depth levels
+            n_anom= val3_qf3_or_4.groupby('Z_LOCATION').size()
+            
+            # unique depth levels of current station
+            unique_d=list(set(data.Z_LOCATION))
+            unique_d.sort(reverse=True)
+            
+            time_series_without_anomalies=[]
+            savestring_no_anomalies = savepath+'no_anomalies.txt'
+            for d in unique_d:
+                 
+                # default values of status of missing value before and after
+                # anomaly, 1 corresponds to "start of anomaly comes after a missing value"
+                # and "end of anomaly comes before missing value" respectively
+                missbef=1
+                missaft=1
+                
+                danom = val3_qf3_or_4[val3_qf3_or_4['Z_LOCATION']==d] # anomalies on current depth level d
+                if len(danom)==0: # current time series has no anomalies
+                    time_series_without_anomalies.append('_'.join([st.replace(' ', '_'),p, str(abs(d))]))
+                    continue # to next time series
+                tstamps = data[data['Z_LOCATION']==d].index # time stamps of all observations on current depth level
+                
+                savestring =savepath +p+'_anomalies_'+'_'.join(st.split(' '))+'.csv'
+                
+                start_anom=danom.index[0]
+                time_stamp_before =start_anom-dt.timedelta(hours=1)
+                time_stamp_after = start_anom+dt.timedelta(hours=1)
+
+                # check for missing values
+                if time_stamp_before in tstamps:
+                    missbef=0
+                if time_stamp_after in tstamps:
+                    missaft=0
+                
+               
+                if len(danom)==1: # only a single anomaly in current time series
+                    # initialize DataFrame for saving the trade-off between maximum time span
+                    # and minimum length of gaps being ignored
+                    anomalies=pd.DataFrame(columns= ['LENGTH','MISSING_BEFORE', 'MISSING_AFTER'], index=danom.index)
+                    
+                    # save data in dataframe 
+                    anomalies.loc[danom.index[0]] = [1, #LENGTH
+                                              missbef,# MISSING_BEFORE
+                                              missaft]# MISSING_AFTER
+                    continue
+                
+                # differences of the time stamps of the anomalies
+                time_gaps = diff_time_vec(danom.index).dropna()
+                
+                # time gaps greater than 1 mark beginning of anomaly
+                # turn them into string of the timestamp
+                start_of_anomalies = [s for s in time_gaps[time_gaps >1].index]
+                
+                # initialize DataFrame for saving the trade-off between maximum time span
+                # and minimum length of gaps being ignored
+                # here: index is different
+                other_index = [danom.index[0], start_of_anomalies]
+                anomalies=pd.DataFrame(columns= ['LENGTH','MISSING_BEFORE', 'MISSING_AFTER'], index=other_index)
+                
+                
+                if time_gaps[0]>1: # first datestamp of anomaly time series (danom) marks an anomaly of length 1
+                    time_stamp_after = start_anom+dt.timedelta(hours=1)
+
+                    # check for missing values
+                    if time_stamp_before in tstamps:
+                        missbef=0
+                    if time_stamp_after in tstamps:
+                        missaft=0
+                        
+                    # save data in dataframe 
+                    anomalies.loc[danom.index[0]] = [1, #LENGTH
+                                              missbef,# MISSING_BEFORE
+                                              missaft]# MISSING_AFTER
+                
+                else: # first datestamp of anomaly time series (ddata) marks an anomaly of length >1
+                    # find out length of anomaly
+                    i = 0
+                    lgth=2
+                    while 1:
+                        i+=1
+                        if i<len(time_gaps) and time_gaps[i]<=1:
+                            lgth+=1
+                        else:
+                            break
+                        
+                    # check for missing values
+                    time_stamp_after = start_anom+dt.timedelta(hours=lgth)
+                    if time_stamp_before in tstamps:
+                        missbef=0
+                    if time_stamp_after in tstamps:
+                        missaft=0
+                        
+                    # save data in dataframe
+                    anomalies.loc[start_anom] = [lgth, #LENGTH
+                                              missbef,# MISSING_BEFORE
+                                              missaft]# MISSING_AFTER
+                    
+                    
+                # all in-between anomalies
+               
+                for sta in start_of_anomalies:
+                    start_anom = sta
+                    
+                    # time stamp before anomaly
+                    time_stamp_before =start_anom-dt.timedelta(hours=1)
+                    # find out length of anomaly
+                    lgth=1
+                    while 1:
+                        i+=1
+                        if i<len(time_gaps) and time_gaps[i]<=1:
+                            lgth+=1
+                        else:
+                            break
+                        
+                    # check for missing values
+                    time_stamp_after = start_anom+dt.timedelta(hours=lgth)
+                    if time_stamp_before in tstamps:
+                        missbef=0
+                    if time_stamp_after in tstamps:
+                        missaft=0
+                        
+                    # save data in dataframe
+                    anomalies.loc[start_anom] = [lgth, #LENGTH
+                                              missbef,# MISSING_BEFORE
+                                              missaft]# MISSING_AFTER
     
-    # number of anomalies grouped by depth levels
-    n_anom= val3_qf3_or_4.groupby('Z_LOCATION').size()
-    print(stname+', '+paracode+'\n'+
-          '----------------------------------\n'+
-         'Anzahl Datenpunkte ('+start.strftime('%Y%m%d')+'-'+end.strftime('%Y%m%d')+'): '+str(n_dp)+'\n')
-    for flag in range(0,n_qfs+1):
-        absval=df[df.QF1==flag].QF1.count()
-        frac = absval/n_dp
-        print('Validation level 1, quality flag '+str(flag)+': '+str(absval)+' ({:.4f}'.format(frac)+')')
-        absval=df[df.QF3==flag].QF3.count()
-        frac = absval/n_dp
-        print('Validation level 3, quality flag '+str(flag)+': '+str(absval)+' ({:.4f}'.format(frac)+')')
-    print('----------------------------------\n')
+                # save data
+                anomalies.to_csv(savestring, sep=';', index_label='time_stamp')
+        
+        if len(time_series_without_anomalies)>0:
+            with open(savestring_no_anomalies, 'w') as outfile:
+                outfile.write('\n'.join(i for i in time_series_without_anomalies))
+            outfile.close()
     return
+
+anomaly_exploration()
