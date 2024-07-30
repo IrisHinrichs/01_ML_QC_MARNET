@@ -105,15 +105,15 @@ def analyze_gaps():
             
             # max time spans as function of 
             # time delta defining data gaps to be ingored
-            savestringtstd =savepath +p+'_time_spans_deltas_'+'_'.join(s.split(' '))+'.csv'
+            savestringtstd =savepath+'Time_Spans/' +p+'_time_spans_deltas_'+'_'.join(s.split(' '))+'.csv'
             
             # change in minutes of sampling scheme
             savestringmints= savepath +p+'_sampling_scheme_'+'_'.join(s.split(' '))+'.csv'
             
             # time delta corresponding t 99.9% of cumulative distribution
-            savestringtd99p9= savepath +p+'_td99.9_'+'_'.join(s.split(' '))+'.csv'
+            savestringtd99p9= savepath+'Quantiles/' +p+'_td99.9_'+'_'.join(s.split(' '))+'.csv'
             # time delta corresponding t 50% of cumulative distribution
-            savestringtd50= savepath +p+'_td50_'+'_'.join(s.split(' '))+'.csv'
+            savestringtd50= savepath+'Quantiles/' +p+'_td50_'+'_'.join(s.split(' '))+'.csv'
             
             filestring = get_filestring(s,p,)
             file = datapath+filestring

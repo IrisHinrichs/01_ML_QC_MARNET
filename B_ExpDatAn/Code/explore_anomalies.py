@@ -100,7 +100,7 @@ def anomaly_exploration():
     
     for st in stations:
         # path for data storage
-        savepath = '../Results/'+'_'.join(st.split(' '))+'/'
+        savepath = '../Results/'+'_'.join(st.split(' '))+'/Anomalies/'
         for p in params:
             filestr = get_filestring(st, p)
             print(filestr)
