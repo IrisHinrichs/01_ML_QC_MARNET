@@ -101,6 +101,9 @@ def anomaly_exploration():
     for st in stations:
         # path for data storage
         savepath = '../Results/'+'_'.join(st.split(' '))+'/Anomalies/'
+        
+        time_series_without_anomalies=[]
+        savestring_no_anomalies = savepath+'no_anomalies.txt'
         for p in params:
             filestr = get_filestring(st, p)
             print(filestr)
@@ -116,8 +119,6 @@ def anomaly_exploration():
             unique_d=list(set(data.Z_LOCATION))
             unique_d.sort(reverse=True)
             
-            time_series_without_anomalies=[]
-            savestring_no_anomalies = savepath+'no_anomalies.txt'
             for d in unique_d:
                  
                 # default values of status of missing value before and after
