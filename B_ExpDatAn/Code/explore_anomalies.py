@@ -8,7 +8,7 @@ Created on Mon Jul 29 15:32:37 2024
 import datetime as dt
 import time
 import numpy as np
-import pandas as pd
+import pandas as pd # version 2.1.4 auf dem Laptop zu Hause
 from utilities import read_station_data, get_filestring, diff_time_vec
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
@@ -106,8 +106,6 @@ def anomaly_exploration():
             print(filestr)
             data=read_station_data(filestr=datapath+filestr)
     
-            n_dp=len(data)
-    
             # Find data with quality flag set to 4 or 3 in validation level 3
             val3_qf3_or_4 = data[data.QF3.isin([3,4])]
             
@@ -134,7 +132,7 @@ def anomaly_exploration():
                     continue # to next time series
                 tstamps = data[data['Z_LOCATION']==d].index # time stamps of all observations on current depth level
                 
-                savestring =savepath +p+'_anomalies_'+'_'.join(st.split(' '))+'.csv'
+                savestring =savepath +p+'_'+str(abs(d))+'_anomalies_'+'_'.join(st.split(' '))+'.csv'
                 
                 start_anom=danom.index[0]
                 time_stamp_before =start_anom-dt.timedelta(hours=1)
@@ -168,11 +166,12 @@ def anomaly_exploration():
                 # initialize DataFrame for saving the trade-off between maximum time span
                 # and minimum length of gaps being ignored
                 # here: index is different
-                other_index = [danom.index[0], start_of_anomalies]
+                other_index = [danom.index[0]]
+                [other_index.append(ind) for ind in start_of_anomalies]
                 anomalies=pd.DataFrame(columns= ['LENGTH','MISSING_BEFORE', 'MISSING_AFTER'], index=other_index)
                 
                 
-                if time_gaps[0]>1: # first datestamp of anomaly time series (danom) marks an anomaly of length 1
+                if time_gaps.iloc[0]>1: # first datestamp of anomaly time series (danom) marks an anomaly of length 1
                     time_stamp_after = start_anom+dt.timedelta(hours=1)
 
                     # check for missing values
@@ -192,7 +191,7 @@ def anomaly_exploration():
                     lgth=2
                     while 1:
                         i+=1
-                        if i<len(time_gaps) and time_gaps[i]<=1:
+                        if i<len(time_gaps) and time_gaps.iloc[i]<=1:
                             lgth+=1
                         else:
                             break
@@ -221,7 +220,7 @@ def anomaly_exploration():
                     lgth=1
                     while 1:
                         i+=1
-                        if i<len(time_gaps) and time_gaps[i]<=1:
+                        if i<len(time_gaps) and time_gaps.iloc[i]<=1:
                             lgth+=1
                         else:
                             break
