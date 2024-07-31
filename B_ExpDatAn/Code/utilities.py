@@ -6,6 +6,7 @@ Created on Thu Jul 18 14:57:32 2024
 """
 import pandas as pd
 import datetime as dt
+from pandas._libs.tslibs import timedeltas
 
 
 def get_filestring(s='North Sea Buoy II',p='WT',start=dt.datetime(2020,1,1), end=dt.datetime(2024,6,30)):
@@ -74,8 +75,14 @@ def convert_duration_string(dur_raw='263 days 21:00:00'):
         Duration in hours.
 
     '''
-    dur_vals = dur_raw.split(' ')
-    days = int(dur_vals[0])
-    hours = int(dur_vals[2][0:2])
+    if isinstance(dur_raw,str):
+        dur_vals = dur_raw.split(' ')
+        days = int(dur_vals[0])
+        hours = int(dur_vals[2][0:2])
+    elif isinstance(dur_raw, timedeltas.Timedelta):
+        days=dur_raw.days
+        hours=dur_raw.seconds/3600
+            
+   
     dur_hours =days*24+hours
     return dur_hours
