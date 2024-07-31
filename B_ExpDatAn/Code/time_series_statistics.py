@@ -8,7 +8,7 @@ import datetime as dt
 import time
 import numpy as np
 import pandas as pd
-from utilities import read_station_data, get_filestring, diff_time_vec
+from utilities import read_station_data, get_filestring, diff_time_vec, convert_duration_string
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
 
@@ -472,26 +472,6 @@ def plot_td(quant='50'):
     fig.savefig(savefigpath, bbox_inches=bbox_inches)        
     return
     
-def convert_duration_string(dur_raw='263 days 21:00:00'):
-    '''
-    Convert string stating temporal duration to integer of hours
-
-    Parameters
-    ----------
-    dur_raw : str, 
-        String stating the days, hours, minutes and seconds of the duration. The default is '263 days 21:00:00'.
-
-    Returns
-    -------
-    dur_hours : int
-        Duration in hours.
-
-    '''
-    dur_vals = dur_raw.split(' ')
-    days = int(dur_vals[0])
-    hours = int(dur_vals[2][0:2])
-    dur_hours =days*24+hours
-    return dur_hours
 
 def find_all_time_spans(time_vec, tdel):
     '''

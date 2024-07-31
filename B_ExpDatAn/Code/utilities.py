@@ -58,3 +58,24 @@ def diff_time_vec(dtindex):
     diff_ts = tseries.diff()
     diff_ts = diff_ts.dt.days*24+diff_ts.dt.seconds/3600
     return diff_ts
+
+def convert_duration_string(dur_raw='263 days 21:00:00'):
+    '''
+    Convert string stating temporal duration to integer of hours
+
+    Parameters
+    ----------
+    dur_raw : str, 
+        String stating the days, hours, minutes and seconds of the duration. The default is '263 days 21:00:00'.
+
+    Returns
+    -------
+    dur_hours : int
+        Duration in hours.
+
+    '''
+    dur_vals = dur_raw.split(' ')
+    days = int(dur_vals[0])
+    hours = int(dur_vals[2][0:2])
+    dur_hours =days*24+hours
+    return dur_hours
