@@ -8,8 +8,8 @@ Created on Mon Jul 29 15:32:37 2024
 import datetime as dt
 import time
 import numpy as np
-import pandas as pd # version 2.1.4 auf dem Laptop zu Hause
-from utilities import read_station_data, get_filestring, diff_time_vec
+import pandas as pd # version 2.1.4 auf dem Laptop zu Hause, 1.4.4 bei der Arbeit
+from utilities import read_station_data, get_filestring, diff_time_vec, convert_duration_string
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
 import matplotlib as mtpl
@@ -131,24 +131,25 @@ def anomaly_exploration():
                 if len(danom)==0: # current time series has no anomalies
                     time_series_without_anomalies.append('_'.join([st.replace(' ', '_'),p, str(abs(d))]))
                     continue # to next time series
-                tstamps = data[data['Z_LOCATION']==d].index # time stamps of all observations on current depth level
+                tstamps = pd.Series(data[data['Z_LOCATION']==d].index) # time stamps of all observations on current depth level
                 
                 savestring =savepath +p+'_'+str(abs(d))+'_anomalies_'+'_'.join(st.split(' '))+'.csv'
                 
+                # timestamp of first anomalie in current time series
                 start_anom=danom.index[0]
+                
                 time_stamp_before =start_anom-dt.timedelta(hours=1)
                 time_stamp_after = start_anom+dt.timedelta(hours=1)
 
                 # check for missing values
-                if time_stamp_before in tstamps:
+                if tstamps.isin([time_stamp_before]).any():
                     missbef=0
-                if time_stamp_after in tstamps:
+                if tstamps.isin([time_stamp_after]).any():
                     missaft=0
                 
                
                 if len(danom)==1: # only a single anomaly in current time series
-                    # initialize DataFrame for saving the trade-off between maximum time span
-                    # and minimum length of gaps being ignored
+                    # initialize DataFrame for data about the anomalies
                     anomalies=pd.DataFrame(columns= ['LENGTH','MISSING_BEFORE', 'MISSING_AFTER'], index=danom.index)
                     
                     # save data in dataframe 
@@ -157,15 +158,16 @@ def anomaly_exploration():
                                               missaft]# MISSING_AFTER
                     continue
                 
-                # differences of the time stamps of the anomalies
+                # differences of the time stamps of the anomalie
+                # rethink time_gaps! The way they are calculated now, they also take into account the observational 
+                # as timedelta between one anomalie and the other
                 time_gaps = diff_time_vec(danom.index).dropna()
                 
                 # time gaps greater than 1 mark beginning of anomaly
                 # turn them into string of the timestamp
                 start_of_anomalies = [s for s in time_gaps[time_gaps >1].index]
                 
-                # initialize DataFrame for saving the trade-off between maximum time span
-                # and minimum length of gaps being ignored
+                # initialize DataFrame for saving data about the anomalies
                 # here: index is different
                 other_index = [danom.index[0]]
                 [other_index.append(ind) for ind in start_of_anomalies]
@@ -176,9 +178,9 @@ def anomaly_exploration():
                     time_stamp_after = start_anom+dt.timedelta(hours=1)
 
                     # check for missing values
-                    if time_stamp_before in tstamps:
+                    if tstamps.isin([time_stamp_before]).any() and time_stamp_before>tlims[0]:
                         missbef=0
-                    if time_stamp_after in tstamps:
+                    if tstamps.isin([time_stamp_after]).any() and time_stamp_before>tlims[1]:
                         missaft=0
                         
                     # save data in dataframe 
@@ -186,7 +188,7 @@ def anomaly_exploration():
                                               missbef,# MISSING_BEFORE
                                               missaft]# MISSING_AFTER
                 
-                else: # first datestamp of anomaly time series (ddata) marks an anomaly of length >1
+                else: # first datestamp of anomaly time series (danom) marks an anomaly of length >1
                     # find out length of anomaly
                     i = 0
                     lgth=2
@@ -199,9 +201,9 @@ def anomaly_exploration():
                         
                     # check for missing values
                     time_stamp_after = start_anom+dt.timedelta(hours=lgth)
-                    if time_stamp_before in tstamps:
+                    if tstamps.isin([time_stamp_before]).any() and time_stamp_before>tlims[0]:
                         missbef=0
-                    if time_stamp_after in tstamps:
+                    if tstamps.isin([time_stamp_after]).any() and time_stamp_before>tlims[1]:
                         missaft=0
                         
                     # save data in dataframe
@@ -211,14 +213,22 @@ def anomaly_exploration():
                     
                     
                 # all in-between anomalies
-               
+                start_anom_old = start_anom
                 for sta in start_of_anomalies:
                     start_anom = sta
+                    
+                    # check completeness of time series of observations
+                    delta_t = start_anom-start_anom_old
+                    delta_t = convert_duration_string(delta_t)
+                    delta_t_obs = list(tstamps).index(start_anom)-list(tstamps).index(start_anom_old)
+                    diff_delta = abs(delta_t -delta_t_obs)
+                    if diff_delta>0:
+                        print(sta)
                     
                     # time stamp before anomaly
                     time_stamp_before =start_anom-dt.timedelta(hours=1)
                     # find out length of anomaly
-                    lgth=1
+                    lgth=-diff_delta+1
                     while 1:
                         i+=1
                         if i<len(time_gaps) and time_gaps.iloc[i]<=1:
@@ -228,9 +238,9 @@ def anomaly_exploration():
                         
                     # check for missing values
                     time_stamp_after = start_anom+dt.timedelta(hours=lgth)
-                    if time_stamp_before in tstamps:
+                    if tstamps.isin([time_stamp_before]).any() and time_stamp_before>tlims[0]:
                         missbef=0
-                    if time_stamp_after in tstamps:
+                    if tstamps.isin([time_stamp_after]).any() and time_stamp_before>tlims[1]:
                         missaft=0
                         
                     # save data in dataframe
@@ -238,6 +248,7 @@ def anomaly_exploration():
                                               missbef,# MISSING_BEFORE
                                               missaft]# MISSING_AFTER
     
+                    start_anom_old = start_anom
                 # save data
                 anomalies.to_csv(savestring, sep=';', index_label='time_stamp')
         
