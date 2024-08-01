@@ -4,7 +4,7 @@ Created on Mon Jul 29 15:32:37 2024
 
 @author: bd2107
 """
-
+import math
 import datetime as dt
 import time
 import numpy as np
@@ -112,20 +112,11 @@ def anomaly_exploration():
             # Find data with quality flag set to 4 or 3 in validation level 3
             val3_qf3_or_4 = data[data.QF3.isin([3,4])]
             
-            # number of anomalies grouped by depth levels
-            n_anom= val3_qf3_or_4.groupby('Z_LOCATION').size()
-            
             # unique depth levels of current station
             unique_d=list(set(data.Z_LOCATION))
             unique_d.sort(reverse=True)
             
             for d in unique_d:
-                 
-                # default values of status of missing value before and after
-                # anomaly, 1 corresponds to "start of anomaly comes after a missing value"
-                # and "end of anomaly comes before missing value" respectively
-                missbef=1
-                missaft=1
                 
                 danom = val3_qf3_or_4[val3_qf3_or_4['Z_LOCATION']==d] # anomalies on current depth level d
                 if len(danom)==0: # current time series has no anomalies
@@ -140,22 +131,20 @@ def anomaly_exploration():
                
                 if len(danom)==1: # only a single anomaly in current time series
                     # initialize DataFrame for data about the anomalies
-                    anomalies=pd.DataFrame(columns= ['LENGTH','MISSING_BEFORE', 'MISSING_AFTER'], index=danom.index)
+                    anomalies=pd.DataFrame(columns= ['LENGTH','N_MISSING_BEFORE', 'N_MISSING_AFTER'], index=danom.index)
+                   
                     
+                    #check missing values before and after anomaly
+                    start_anom = danom.index[0]
+                    missbef, missaft = check_missval_around_anomaly(start_anom, tstamps)
                     # save data in dataframe 
                     anomalies.loc[danom.index[0]] = [1, #LENGTH
-                                              missbef,# MISSING_BEFORE
-                                              missaft]# MISSING_AFTER
-                    # default values of status of missing value before and after
-                    # anomaly, 1 corresponds to "start of anomaly comes after a missing value"
-                    # and "end of anomaly comes before missing value" respectively
-                    missbef=1
-                    missaft=1
+                                              missbef,# N_MISSING_BEFORE
+                                              missaft]# N_MISSING_AFTER
+                   
                     continue
                 
-                # differences of the time stamps of the anomalie
-                # rethink time_gaps! The way they are calculated now, they also take into account the observational 
-                # as timedelta between one anomalie and the other
+                # differences of the time stamps of the anomalies
                 time_gaps = diff_time_vec(danom.index).dropna()
                 
                 # time gaps greater than 1 mark beginning of anomaly
@@ -166,50 +155,33 @@ def anomaly_exploration():
                 # here: index is different
                 other_index = [danom.index[0]]
                 [other_index.append(ind) for ind in start_of_anomalies]
-                anomalies=pd.DataFrame(columns= ['LENGTH','MISSING_BEFORE', 'MISSING_AFTER'], index=other_index)
+                anomalies=pd.DataFrame(columns= ['LENGTH','N_MISSING_BEFORE', 'N_MISSING_AFTER'], index=other_index)
                 
                 # initiate index for time_gaps 
                 i=0
                 if time_gaps.iloc[i]>1: # first datestamp of anomaly time series (danom) marks an anomaly of length 1
-                    time_stamp_before = start_anom-dt.timedelta(hours=1)    
-                    time_stamp_after = start_anom+dt.timedelta(hours=1)
-
-                    # check for missing values
-                    if tstamps.isin([time_stamp_before]).any() and time_stamp_before>tlims[0]:
-                        missbef=0
-                    if tstamps.isin([time_stamp_after]).any() and time_stamp_after<tlims[1]:
-                        missaft=0
-                        
+                    
+                    #check missing values before and after anomaly
+                    missbef, missaft = check_missval_around_anomaly(start_anom, tstamps)
                     # save data in dataframe 
                     anomalies.loc[danom.index[0]] = [1, #LENGTH
-                                              missbef,# MISSING_BEFORE
-                                              missaft]# MISSING_AFTER
+                                              missbef,# N_MISSING_BEFORE
+                                              missaft]# N_MISSING_AFTER
                 else: # first datestamp of anomaly time series (danom) marks an anomaly of length >1
                     # find out length of anomaly
                     lgth=1
                     while  i<len(time_gaps) and time_gaps.iloc[i]<=1:
                         i+=1
                         lgth+=1    
-                    # check for missing values
-                    time_stamp_before = start_anom-dt.timedelta(hours=1)
-                    time_stamp_after = start_anom+dt.timedelta(hours=lgth)
-                    if tstamps.isin([time_stamp_before]).any() and time_stamp_before>tlims[0]:
-                        missbef=0
-                    if tstamps.isin([time_stamp_after]).any() and time_stamp_after<tlims[1]:
-                        missaft=0
+                    #check missing values before and after anomaly
+                    missbef, missaft = check_missval_around_anomaly(start_anom, tstamps, lgth)
                         
                     # save data in dataframe
                     anomalies.loc[start_anom] = [lgth, #LENGTH
-                                              missbef,# MISSING_BEFORE
-                                              missaft]# MISSING_AFTER
-                    # default values of status of missing value before and after
-                    # anomaly, 1 corresponds to "start of anomaly comes after a missing value"
-                    # and "end of anomaly comes before missing value" respectively
-                    missbef=1
-                    missaft=1 
-                    
+                                              missbef,# N_MISSING_BEFORE
+                                              missaft]# N_MISSING_AFTER
+                   
                 # all following anomalies
-
                 for sta in start_of_anomalies:
                     start_anom = sta
                     print(start_anom)
@@ -223,23 +195,13 @@ def anomaly_exploration():
                         i+=1
                         lgth+=1
                     
-                    # check for missing values
-                    time_stamp_before = start_anom-dt.timedelta(hours=1)
-                    time_stamp_after = start_anom+dt.timedelta(hours=lgth)
-                    if tstamps.isin([time_stamp_before]).any() and time_stamp_before>tlims[0]:
-                        missbef=0
-                    if tstamps.isin([time_stamp_after]).any() and time_stamp_after<tlims[1]:
-                        missaft=0
-                        
+                    #check missing values before and after anomaly
+                    missbef, missaft = check_missval_around_anomaly(start_anom, tstamps, lgth)
                     # save data in dataframe
                     anomalies.loc[start_anom] = [lgth, #LENGTH
-                                              missbef,# MISSING_BEFORE
-                                              missaft]# MISSING_AFTER
-                    # default values of status of missing value before and after
-                    # anomaly, 1 corresponds to "start of anomaly comes after a missing value"
-                    # and "end of anomaly comes before missing value" respectively
-                    missbef=1
-                    missaft=1
+                                              missbef,# N_MISSING_BEFORE
+                                              missaft]# N_MISSING_AFTER
+                   
                 # save data
                 anomalies.to_csv(savestring, sep=';', index_label='time_stamp')
         
@@ -248,5 +210,53 @@ def anomaly_exploration():
                 outfile.write('\n'.join(i for i in time_series_without_anomalies))
             outfile.close()
     return
+
+def check_missval_around_anomaly(start_anom, tstamps, lgth=1):
+    '''
+    Checks for any missing values in time series before and after detected 
+    anomaly and counts the number of them
+
+    Parameters
+    ----------
+    start_anom : TimeStamp
+        Beginning of the anomaly.
+    tstamps : DateTimeIndex
+        TimeStamps of observational data.
+    lgth : int, optional
+        Length of anomaly. The default is 1.
+
+    Returns
+    -------
+    missbef : int
+        number of missing values before anomaly.
+    missaft : TYPE
+        number of missing values after anomaly.
+
+    '''
+    
+    # initialize missing values before and after anomaly with 0
+    missbef=tgap_before=0
+    missaft= tgap_after=0
+
+    
+    obsindex_start = list(tstamps).index(start_anom)
+    obsindex_end = obsindex_start+lgth-1
+    
+    
+    if obsindex_start>0:
+        tgap_before=tstamps.iloc[obsindex_start-1:obsindex_start+1].diff()
+        tgap_before = convert_duration_string(tgap_before.iloc[1]) # time gap in hours
+    
+    if obsindex_end<(len(tstamps)-1):
+        tgap_after=tstamps.iloc[obsindex_end:obsindex_end+2].diff()
+        tgap_after = convert_duration_string(tgap_after.iloc[1]) # time gap in hours
+    
+    if tgap_before>1:
+        missbef=tgap_before
+        
+    if tgap_after>1:
+        missaft=tgap_after
+    
+    return int(math.ceil(missbef)), int(math.ceil(missaft))
 
 anomaly_exploration()
