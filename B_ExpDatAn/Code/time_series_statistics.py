@@ -141,6 +141,15 @@ def analyze_gaps():
                 mints_fracs.name='temporal fraction'
                 mints_fracs.to_csv(savestringmints, sep= ';', index_label= 'minute')
                 
+                # find out when the change in minutes happens
+                all_minutes = pd.Series(data.index, index=data.index).dt.minute
+                diff_minutes = all_minutes.diff()
+                change_ind = diff_minutes[diff_minutes!=0].index
+                add_line = 'Wechsel zwischen '+' und '.join(str(cind) for cind in change_ind)
+                with open(savestringmints, 'a') as f:
+                    f.write(add_line)
+                
+                
             # initialize DataFrame for saving the trade-off between maximum time span
             # and minimum length of gaps being ignored
             depth_max_tspans=pd.DataFrame(columns= ['MIN_TIME_DELTA','DURATION', 'START'], index=depth_index)
@@ -151,7 +160,7 @@ def analyze_gaps():
             tdelta_50=pd.DataFrame(columns= ['TIME_DELTA_0p5'], index=depth_index)
             for d in unique_d:
                 # filestring for data storage
-                savestringts =savepath +p+'_'+str(abs(d))+'_max_time_spans_'+'_'.join(s.split(' '))+'.csv'
+                savestringts =savepath+'Time_Spans/' +p+'_'+str(abs(d))+'_max_time_spans_'+'_'.join(s.split(' '))+'.csv'
                 
                 
                 #print('Tiefenstufe '+ str(abs(d))+' m')
@@ -168,7 +177,7 @@ def analyze_gaps():
                 
                 # minimum time difference
                 min_time_diff = np.nanmin(diff_vec_hrs)
-               # print('Minimale Zeitdifferenz: '+"%0.2f" %min_time_diff+' Stunden')
+                # print('Minimale Zeitdifferenz: '+"%0.2f" %min_time_diff+' Stunden')
                
                 # cumulative distribution of time differences
                 # keep only values greater than 1 hour time difference
@@ -528,13 +537,9 @@ def find_all_time_spans(time_vec, tdel):
         old_end_gap = end_gap 
     return tspans
                
-def main():
-    for s in stations:
-        for p in params:
-            statistics(stname=s, paracode=p)
 #plot_coverage()
-#analyze_gaps()
+analyze_gaps()
 #plot_max_time_spans(time_delta=False, frac=False)
-plot_td()
+#plot_td()
 
 
