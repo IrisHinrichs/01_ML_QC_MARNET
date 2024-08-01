@@ -259,4 +259,78 @@ def check_missval_around_anomaly(start_anom, tstamps, lgth=1):
     
     return int(math.ceil(missbef)), int(math.ceil(missaft))
 
-anomaly_exploration()
+def plot_anomaly_mdata():
+    count_rows=0
+    nrows = len(stations)
+    ncols=len(params)
+    fstring = 'anomalies'
+    for st in stations:
+        stname = '_'.join(st.split(' '))
+        count_cols=1
+        curr_dir = '../Results/'+stname+'/Anomalies/'
+        for p in params:
+            for f in os.listdir(curr_dir):
+                if f[0:2]==p and fstring in f:
+                    print(f)
+                # get depth level
+                ff = f.split('_')
+                d = float(ff[1])*-1
+                data = pd.read_csv(curr_dir+f, sep=';', index_col='time_stamp')
+                # convert string stating temporal duration to integer of hours
+                dur_hours = data.LENGTH
+                
+               
+                ylabelstr = 'Länge [Stunden]'
+                
+                #define colormap
+                if p == 'WT':
+                    col='blue'
+                else:
+                    col='purple'
+                
+                
+                ax=plt.subplot(nrows, ncols, count_rows*2+count_cols)
+                plt.bar(d, dur_hours, orientation='horizontal', color=col)            
+                
+                if st==stations[0]:
+                    plt.title(paramdict[p], fontsize=fs)
+                if p!='SZ':
+                    plt.text(1.05, 0.5, stationsdict[st], 
+                        horizontalalignment='center',
+                        verticalalignment='center', 
+                        transform=plt.gca().transAxes, 
+                        rotation=90, **fontdict)
+                
+                # keep current ylims
+                ylims = plt.ylim()
+                
+                
+                # set xlims, ylims
+                plt.ylim(ylims)
+                plt.xlim(tlims)
+                plt.grid()
+                
+                # make legend
+                # legstring= [str(d) for d in unique_d]
+                # legstring.append('flag=3,4')
+                # plt.legend(legstring)
+                
+                
+                
+                # customize axes labels etc.
+                plt.yticks(fontsize= fs)
+                if count_rows*2+count_cols not in [nrows*ncols-1, nrows*ncols]:
+                    ax.set_xticklabels([])
+                else:
+                    # labels = ax.get_xticklabels()
+                    # label_locs = ax.get_xticks()
+                    plt.xticks(rotation=45, fontsize=fs)
+            count_cols+=1 
+        count_rows+=1 
+    #fig.savefig(savefigpath, bbox_inches=bbox_inches)
+    return
+
+#anomaly_exploration()
+plot_anomaly_mdata()
+
+
