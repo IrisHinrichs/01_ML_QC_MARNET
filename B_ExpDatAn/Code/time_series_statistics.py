@@ -145,6 +145,10 @@ def analyze_gaps():
                 all_minutes = pd.Series(data.index, index=data.index).dt.minute
                 diff_minutes = all_minutes.diff()
                 change_ind = diff_minutes[diff_minutes!=0].index
+                second_ind = change_ind[1]
+                first_ind = list(diff_minutes.index).index(second_ind)-1
+                first_ind = diff_minutes.index[first_ind]
+                change_ind = [first_ind, second_ind]
                 add_line = 'Wechsel zwischen '+' und '.join(str(cind) for cind in change_ind)
                 with open(savestringmints, 'a') as f:
                     f.write(add_line)
