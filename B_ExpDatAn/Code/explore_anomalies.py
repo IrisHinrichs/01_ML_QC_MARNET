@@ -10,9 +10,10 @@ import time
 import numpy as np
 import pandas as pd # version 2.1.4 auf dem Laptop zu Hause, 1.4.4 bei der Arbeit
 from utilities import read_station_data, get_filestring, diff_time_vec, convert_duration_string
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt 
 from matplotlib.legend_handler import HandlerTuple
 import matplotlib as mtpl
+from matplotlib.dates import DateFormatter
 
 from common_variables import datapath, layout, cm, stations, stationsdict,\
     params, paramdict, tlims, fs, fontdict, bbox_inches
@@ -257,6 +258,7 @@ def check_missval_around_anomaly(start_anom, tstamps, lgth=1):
     return int(math.ceil(missbef)), int(math.ceil(missaft))
 
 def plot_anomaly_mdata():
+    # not finished
     count_rows=0
     nrows = len(stations)
     ncols=len(params)
@@ -346,10 +348,128 @@ def plot_anomaly_mdata():
         count_rows+=1 
     fig.savefig(savefigpath, bbox_inches=bbox_inches)
     return
-
-def combine_anomalies(anom_meta, gap_thresh=12):
+def visualize_anomalies():
+    fstring = '_anomalies_'
+   
+    # define figure height
+    plt.rcParams['figure.figsize'][1]=8*cm
+    #plt.rcdefaults()
     
-    #
+    for st in stations:
+        stname = '_'.join(st.split(' '))
+        curr_dir = '../Results/'+stname+'/Anomalies/'
+        for p in params:
+            
+            #define colormap
+            if p == 'WT':
+                col='blue'
+                ylabelstr = '[° C]'
+            else:
+                col='purple'
+                ylabelstr = '[]'
+                
+                
+            # read station data
+            station_data = read_station_data(datapath+get_filestring(st, p))
+            
+           
+            for f in os.listdir(curr_dir):
+                if f[0:2]==p and fstring in f:
+                    print(f)
+                else:
+                    continue
+                # get depth level
+                ff = f.split('_')
+                d = float(ff[1])*-1
+                data = pd.read_csv(curr_dir+f, sep=';', index_col='time_stamp')
+                
+                # create path to save figures
+                savefigpath = '../Figures/'+ stname+'/Anomalies/'+p+'_'+str(abs(d))+'/'
+                if not os.path.exists(savefigpath):
+                    os.makedirs(savefigpath)
+                
+                # station data on specific depth level
+                stdata_d = station_data[station_data.Z_LOCATION==d]
+                timeindex = list(stdata_d.index)
+                
+                
+                # combine anomalies that are only connected by a sequence of 
+                # missing values
+                len_data_old = 0
+                while len(data)!= len_data_old: # repeat procedure until there 
+                                                # are no pairwise anomlies that 
+                                                # need to be combined
+                                                # and input and output of function
+                                                # combine_anomalies have equal length
+                    len_data_old = len(data)
+                    data = combine_anomalies(data)
+                    
+                # convert string stating temporal duration to integer of hours
+                dur_hours = data.LENGTH
+                
+                # iterate over all anomalies and viusalize the data
+                extension = 20 # also visualize ten hours before and after
+                                # start and end of anomaly
+                figcounter=0
+                for ind in range(0,len(data)):
+                    figname = 'anomalie_'+str(figcounter)+'.png'
+                    fig = plt.figure()
+                    # time stamp of starting point of current anomaly
+                    start_anom =dt.datetime.strptime(data.index[ind], '%Y-%m-%d %H:%M:%S')
+                    # length of current anomaly
+                    len_anom = data.LENGTH.iloc[ind]
+                    # start of visualization
+                    start_vis = start_anom-dt.timedelta(hours=extension)
+                    # end of visualization
+                    end_vis = start_anom+dt.timedelta(hours=(int(len_anom)+extension))
+                    # data to visualize
+                    vis_mask = (stdata_d.index>=start_vis) & (stdata_d.index <=end_vis)
+                    vis_data = stdata_d.loc[vis_mask]
+                    vis_anom = vis_data.DATA_VALUE[vis_data.QF3.isin([3,4])]
+                    vis_obs = vis_data.DATA_VALUE
+                    
+                    # plot time series
+                    plt.plot(vis_anom, 'ro',alpha=0.2, markersize=7, linewidth=2)
+                    plt.plot(vis_obs, '+', color=col, markersize=7, linewidth=2)
+                    plt.grid()
+                    pstring = paramdict[p].replace(ylabelstr, '')
+                    titlestring = stationsdict[st].replace('[° C]', '')+', '+pstring+', Tiefe='+str(abs(d))+' m\n'+\
+                                    start_vis.strftime('%d.%m.%Y %H:%M:%S')+'-'+end_vis.strftime('%d.%m.%Y %H:%M:%S')
+                    plt.title(titlestring, fontsize=fs, wrap=True)
+                    plt.ylabel(ylabelstr)
+                    
+                    #
+                    date_form = DateFormatter("%b-%d")
+                    plt.gca().xaxis.set_major_formatter(date_form)
+                    plt.xlim(start_vis, end_vis)
+                    
+                    plt.show()
+                    fig.savefig(savefigpath+figname, bbox_inches=bbox_inches)
+                    plt.close(fig)
+                    figcounter+=1
+                   
+                   
+    
+def combine_anomalies(anom_meta, gap_thresh=12):
+    '''
+    Combines anomalies that are connected by a sequence of missing data points
+
+    Parameters
+    ----------
+    anom_meta : pandas.core.frame.DataFrame
+        Dataframe containing meta data about anomalies.
+        Index corresponds to time stamp of beginnning of anomaly,
+        columns are "LENGTH", "N_MISSING_BEFORE", "N_MISSING_AFTER"
+    gap_thresh : int, optional
+        Threshold defining the length to which a sequence of missing values 
+        between two anomalies is accepted as connecting. The default is 12.
+
+    Returns
+    -------
+    anomalies : TYPE
+        DESCRIPTION.
+
+    '''
     # initiate dataframe for new anomaly meta data
     anomalies=pd.DataFrame(columns= list(anom_meta.columns))
     cont=False
@@ -365,7 +485,7 @@ def combine_anomalies(anom_meta, gap_thresh=12):
         # start of current anomaly
         start = dt.datetime.strptime(anom_meta.index[ind], '%Y-%m-%d %H:%M:%S')
         
-        if missaft>0 and missaft <= gap_thresh and ind+1<=len(anom_meta):
+        if missaft>0 and missaft <= gap_thresh and ind+1<len(anom_meta):
             # number of missing values before next anomaly
             next_missbef = anom_meta.N_MISSING_BEFORE.iloc[ind+1]
             # start of next anomaly
@@ -387,14 +507,12 @@ def combine_anomalies(anom_meta, gap_thresh=12):
             cont=False
             continue
     # reset index
-    anomalies.set_index(anomalies.index.strftime('%Y-%m-%d %H:%M:%S'))
+    anomalies=anomalies.set_index(anomalies.index.strftime('%Y-%m-%d %H:%M:%S'))
     return anomalies        
     
 
 #anomaly_exploration()
 # plot_anomaly_mdata()
-filestring = 'C:\\Users\\Iris\\Documents\\IU-Studium\\Masterarbeit\\01_ML_QC_MARNET\\B_ExpDatAn\\Results\\Fehmarn_Belt_Buoy\\Anomalies\\SZ_3.0_anomalies_Fehmarn_Belt_Buoy.csv'
-anom_meta = pd.read_csv(filestring,sep=';', index_col= 'time_stamp')
-combine_anomalies(anom_meta)
+visualize_anomalies()
 
 
