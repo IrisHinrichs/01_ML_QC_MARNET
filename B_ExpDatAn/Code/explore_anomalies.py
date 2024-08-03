@@ -19,9 +19,6 @@ from common_variables import datapath, layout, cm, stations, stationsdict,\
     
 import os
 
-# define figure height
-#plt.rcParams['figure.figsize'][1]=14*cm
-#fig = plt.figure(layout=layout)
 
 def statistics(stname='North Sea Buoy II', paracode='WT', dlevels='all', 
             start=tlims[0], end=tlims[1]):
@@ -263,7 +260,19 @@ def plot_anomaly_mdata():
     count_rows=0
     nrows = len(stations)
     ncols=len(params)
-    fstring = 'anomalies'
+    fstring = '_anomalies_'
+   
+    # define figure height
+    # plt.rcParams['figure.figsize'][1]=14*cm
+    fig = plt.figure(layout=layout)
+    plt.rcdefaults()
+ 
+    savefigpath = '../Figures/anomaly_lengths.png'
+    marker = 'o'
+    msize=3
+    fillst= 'full'
+    al=0.2
+   
     for st in stations:
         stname = '_'.join(st.split(' '))
         count_cols=1
@@ -272,10 +281,13 @@ def plot_anomaly_mdata():
             for f in os.listdir(curr_dir):
                 if f[0:2]==p and fstring in f:
                     print(f)
+                else:
+                    continue
                 # get depth level
                 ff = f.split('_')
                 d = float(ff[1])*-1
                 data = pd.read_csv(curr_dir+f, sep=';', index_col='time_stamp')
+                data = combine_anomalies(data)
                 # convert string stating temporal duration to integer of hours
                 dur_hours = data.LENGTH
                 
@@ -290,47 +302,99 @@ def plot_anomaly_mdata():
                 
                 
                 ax=plt.subplot(nrows, ncols, count_rows*2+count_cols)
-                plt.bar(d, dur_hours, orientation='horizontal', color=col)            
+                #plt.boxplot(dur_hours, vert=False, positions=[d]) 
+                plt.plot(dur_hours, [d]*len(dur_hours),marker, color=col,
+                         markersize=msize, alpha=al)
                 
-                if st==stations[0]:
-                    plt.title(paramdict[p], fontsize=fs)
-                if p!='SZ':
-                    plt.text(1.05, 0.5, stationsdict[st], 
-                        horizontalalignment='center',
-                        verticalalignment='center', 
-                        transform=plt.gca().transAxes, 
-                        rotation=90, **fontdict)
-                
-                # keep current ylims
-                ylims = plt.ylim()
-                
-                
-                # set xlims, ylims
-                plt.ylim(ylims)
-                plt.xlim(tlims)
-                plt.grid()
-                
-                # make legend
-                # legstring= [str(d) for d in unique_d]
-                # legstring.append('flag=3,4')
-                # plt.legend(legstring)
-                
-                
-                
-                # customize axes labels etc.
-                plt.yticks(fontsize= fs)
-                if count_rows*2+count_cols not in [nrows*ncols-1, nrows*ncols]:
-                    ax.set_xticklabels([])
-                else:
-                    # labels = ax.get_xticklabels()
-                    # label_locs = ax.get_xticks()
-                    plt.xticks(rotation=45, fontsize=fs)
+            if st==stations[0]:
+                plt.title(paramdict[p], fontsize=fs)
+            if p!='SZ':
+                plt.text(1.05, 0.5, stationsdict[st], 
+                    horizontalalignment='center',
+                    verticalalignment='center', 
+                    transform=plt.gca().transAxes, 
+                    rotation=90, **fontdict)
+            
+            # # keep current ylims
+            # ylims = plt.ylim()
+            
+            
+            # # set xlims, ylims
+            # plt.ylim(ylims)
+            # plt.xlim(tlims)
+            # plt.grid()
+            
+            # make legend
+            # legstring= [str(d) for d in unique_d]
+            # legstring.append('flag=3,4')
+            # plt.legend(legstring)
+            
+            
+            
+            # customize axes labels etc.
+            plt.yticks(fontsize= fs)
+            
+            ax.set_xscale('log')
+            ax.set_xticklabels([])
+            if count_rows*2+count_cols not in [nrows*ncols-1, nrows*ncols]:
+                ax.set_yticklabels([])
+            else:
+                # get current yticklabel locations
+                yticklabels = plt.gca().get_yticklabels()
+                yticklabels = [l._text.replace(chr(8722), '') for l in yticklabels]
             count_cols+=1 
         count_rows+=1 
-    #fig.savefig(savefigpath, bbox_inches=bbox_inches)
+    fig.savefig(savefigpath, bbox_inches=bbox_inches)
     return
 
+def combine_anomalies(anom_meta, gap_thresh=12):
+    
+    #
+    # initiate dataframe for new anomaly meta data
+    anomalies=pd.DataFrame(columns= list(anom_meta.columns))
+    cont=False
+    for ind in range(0,len(anom_meta)):
+        if cont == True:
+            cont=False
+            continue
+        # length of current anomaly
+        anom_len = anom_meta.LENGTH.iloc[ind]
+        # number of missing valuesbofore and after current anomaly
+        missbef= anom_meta.N_MISSING_BEFORE.iloc[ind]
+        missaft= anom_meta.N_MISSING_AFTER.iloc[ind]
+        # start of current anomaly
+        start = dt.datetime.strptime(anom_meta.index[ind], '%Y-%m-%d %H:%M:%S')
+        
+        if missaft>0 and missaft <= gap_thresh and ind+1<=len(anom_meta):
+            # number of missing values before next anomaly
+            next_missbef = anom_meta.N_MISSING_BEFORE.iloc[ind+1]
+            # start of next anomaly
+            start_next= dt.datetime.strptime(anom_meta.index[ind+1], '%Y-%m-%d %H:%M:%S')
+            len_next = anom_meta.LENGTH.iloc[ind+1]
+            next_missaft=anom_meta.N_MISSING_AFTER.iloc[ind+1]
+            end_anom = start+dt.timedelta(hours=int(anom_len+missaft))
+            if next_missbef==missaft and start_next-end_anom<=dt.timedelta(seconds=3600): # timedelta in seconds
+                # both anomalies are connected by a sequence of missing values
+                # and can therefore be considered as a single anomaly
+                new_current_anomaly = [anom_len+missaft+len_next,missbef, next_missaft ]
+                anomalies.loc[start] = new_current_anomaly
+                cont=True
+            else:# anomaly is not combined with another one
+                anomalies.loc[start]= [anom_len, missbef, missaft] 
+                cont=False
+        else: # anomaly is not combined with another one
+            anomalies.loc[start]= [anom_len, missbef, missaft]
+            cont=False
+            continue
+    # reset index
+    anomalies.set_index(anomalies.index.strftime('%Y-%m-%d %H:%M:%S'))
+    return anomalies        
+    
+
 #anomaly_exploration()
-plot_anomaly_mdata()
+# plot_anomaly_mdata()
+filestring = 'C:\\Users\\Iris\\Documents\\IU-Studium\\Masterarbeit\\01_ML_QC_MARNET\\B_ExpDatAn\\Results\\Fehmarn_Belt_Buoy\\Anomalies\\SZ_3.0_anomalies_Fehmarn_Belt_Buoy.csv'
+anom_meta = pd.read_csv(filestring,sep=';', index_col= 'time_stamp')
+combine_anomalies(anom_meta)
 
 
