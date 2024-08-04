@@ -14,6 +14,8 @@ from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
 import matplotlib as mtpl
 from matplotlib.dates import DateFormatter
+import matplotlib.dates as mdates
+
 
 from common_variables import datapath, layout, cm, stations, stationsdict,\
     params, paramdict, tlims, fs, fontdict, bbox_inches
@@ -352,7 +354,7 @@ def visualize_anomalies():
     fstring = '_anomalies_'
    
     # define figure height
-    plt.rcParams['figure.figsize'][1]=8*cm
+    plt.rcParams['figure.figsize'][1]=6*cm
     #plt.rcdefaults()
     
     for st in stations:
@@ -390,8 +392,7 @@ def visualize_anomalies():
                 
                 # station data on specific depth level
                 stdata_d = station_data[station_data.Z_LOCATION==d]
-                timeindex = list(stdata_d.index)
-                
+               
                 
                 # combine anomalies that are only connected by a sequence of 
                 # missing values
@@ -425,22 +426,28 @@ def visualize_anomalies():
                     # data to visualize
                     vis_mask = (stdata_d.index>=start_vis) & (stdata_d.index <=end_vis)
                     vis_data = stdata_d.loc[vis_mask]
-                    vis_anom = vis_data.DATA_VALUE[vis_data.QF3.isin([3,4])]
+                    vis_anom_QF3 = vis_data.DATA_VALUE[vis_data.QF3.isin([3,4])]
+                    vis_anom_QF1 = vis_data.DATA_VALUE[vis_data.QF1.isin([3,4])]
                     vis_obs = vis_data.DATA_VALUE
                     
                     # plot time series
-                    plt.plot(vis_anom, 'ro',alpha=0.2, markersize=7, linewidth=2)
-                    plt.plot(vis_obs, '+', color=col, markersize=7, linewidth=2)
+                    plt.plot(vis_anom_QF3, 'ro',alpha=0.2, markersize=7, linewidth=2)
+                    plt.plot(vis_anom_QF1, 'ko',alpha=0.2, markersize=7, linewidth=2)
+                    plt.plot(vis_obs, '.', color=col, markersize=3, linewidth=2)
                     plt.grid()
-                    pstring = paramdict[p].replace(ylabelstr, '')
+                    pstring = paramdict[p].replace(' '+ylabelstr, '')
                     titlestring = stationsdict[st].replace('[° C]', '')+', '+pstring+', Tiefe='+str(abs(d))+' m\n'+\
                                     start_vis.strftime('%d.%m.%Y %H:%M:%S')+'-'+end_vis.strftime('%d.%m.%Y %H:%M:%S')
                     plt.title(titlestring, fontsize=fs, wrap=True)
                     plt.ylabel(ylabelstr)
                     
                     #
-                    date_form = DateFormatter("%b-%d")
-                    plt.gca().xaxis.set_major_formatter(date_form)
+                    # date_form = DateFormatter("%b-%d")
+                    # plt.gca().xaxis.set_major_formatter(date_form)
+                    
+                    plt.gca().xaxis.set_major_formatter(
+                    mdates.ConciseDateFormatter(plt.gca().xaxis.get_major_locator()))
+
                     plt.xlim(start_vis, end_vis)
                     
                     plt.show()
