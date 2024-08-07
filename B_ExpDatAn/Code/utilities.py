@@ -7,6 +7,11 @@ Created on Thu Jul 18 14:57:32 2024
 import pandas as pd
 import datetime as dt
 from pandas._libs.tslibs import timedeltas
+import matplotlib.pyplot as plt
+from common_variables import datapath
+import matplotlib as mtpl
+from matplotlib.dates import DateFormatter
+import matplotlib.dates as mdates
 
 
 def get_filestring(s='North Sea Buoy II',p='WT',start=dt.datetime(2020,1,1), end=dt.datetime(2024,6,30)):
@@ -86,3 +91,52 @@ def convert_duration_string(dur_raw='263 days 21:00:00'):
    
     dur_hours =days*24+hours
     return dur_hours
+
+def plot_all_dl_time_series(station='North Sea Buoy III', p='WT', 
+                            start=dt.datetime(2022,11,11,13), end=dt.datetime(2022,11,14,9)):
+    '''
+    Plot MARNET data of a certain parameter on all depth levels of a certain station in a certain 
+    time period 
+
+    Parameters
+    ----------
+    station : str
+        Name of the station. Default is 'North Sea Buoy III' 
+    p : str
+        Observed parameter. Default is 'WT', water temperature
+    start : datetime.datetime
+        Beginning of time period.
+    end : datetime.datetime
+        End of time period.
+
+    Returns
+    -------
+    None.
+
+    '''
+    plt.rcdefaults()
+    # read data
+    filestring = get_filestring(station, p)
+    data = read_station_data(datapath+filestring)
+    
+    # temporal slice
+    mask = (data.index>=start) & (data.index<=end)
+    data_tslice = data.loc[mask]
+    
+    # depth levels
+    depth_levels = [abs(d) for d in data.Z_LOCATION.unique()]
+    depth_levels.sort(reverse=False)
+    counter_d = 1
+    for d in depth_levels:
+        plt.subplot(len(depth_levels), 1, counter_d)
+        plt.plot(data_tslice[data_tslice.Z_LOCATION==d*-1].DATA_VALUE, 'o', markersize=2)
+        counter_d+=1
+        plt.title(str(abs(d)))
+        
+        plt.gca().xaxis.set_major_formatter(
+        mdates.ConciseDateFormatter(plt.gca().xaxis.get_major_locator()))
+        plt.grid()
+        if d!=max(depth_levels):
+            plt.gca().set_xticklabels([])
+        plt.xlim([start, end])            
+#plot_all_dl_time_series()
