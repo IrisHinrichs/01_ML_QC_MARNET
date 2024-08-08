@@ -123,12 +123,29 @@ def plot_all_dl_time_series(station='North Sea Buoy III', p='WT',
     mask = (data.index>=start) & (data.index<=end)
     data_tslice = data.loc[mask]
     
+    #define colormap
+    if p == 'WT':
+        col='blue'
+        ylabelstr = '[° C]'
+    else:
+        col='purple'
+        ylabelstr = '[]'
+        
+    
     # depth levels
-    depth_levels = [abs(d) for d in data.Z_LOCATION.unique()]
+    depth_levels = [abs(d) for d in data_tslice.Z_LOCATION.unique()]
     depth_levels.sort(reverse=False)
     counter_d = 1
     for d in depth_levels:
         plt.subplot(len(depth_levels), 1, counter_d)
+        
+        # anomlies Val 1
+        plt.plot(data_tslice[data_tslice.Z_LOCATION==d*-1].DATA_VALUE, 'o', markersize=2)
+        
+        # anomalies Val 2
+        plt.plot(data_tslice[data_tslice.Z_LOCATION==d*-1].DATA_VALUE, 'o', markersize=2)
+        
+        # DATA_VALUES
         plt.plot(data_tslice[data_tslice.Z_LOCATION==d*-1].DATA_VALUE, 'o', markersize=2)
         counter_d+=1
         plt.title(str(abs(d)))
