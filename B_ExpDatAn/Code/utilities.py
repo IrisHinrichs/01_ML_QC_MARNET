@@ -8,10 +8,11 @@ import pandas as pd
 import datetime as dt
 from pandas._libs.tslibs import timedeltas
 import matplotlib.pyplot as plt
-from common_variables import datapath
+from common_variables import datapath, layout
 import matplotlib as mtpl
 from matplotlib.dates import DateFormatter
 import matplotlib.dates as mdates
+
 
 
 def get_filestring(s='North Sea Buoy II',p='WT',start=dt.datetime(2020,1,1), end=dt.datetime(2024,6,30)):
@@ -114,7 +115,7 @@ def plot_all_dl_time_series(station='North Sea Buoy III', p='WT',
     None.
 
     '''
-    plt.rcdefaults()
+    
     # read data
     filestring = get_filestring(station, p)
     data = read_station_data(datapath+filestring)
@@ -122,6 +123,13 @@ def plot_all_dl_time_series(station='North Sea Buoy III', p='WT',
     # temporal slice
     mask = (data.index>=start) & (data.index<=end)
     data_tslice = data.loc[mask]
+   
+    # plot parameters
+    dy= 0.5
+    ylim = [data_tslice.DATA_VALUE.min()-dy, data_tslice.DATA_VALUE.max()+dy]
+    xlim = [start, end]
+    plt.rcdefaults()
+    fig = plt.figure(layout=layout)
     
     # depth levels
     depth_levels = [abs(d) for d in data.Z_LOCATION.unique()]
@@ -138,5 +146,5 @@ def plot_all_dl_time_series(station='North Sea Buoy III', p='WT',
         plt.grid()
         if d!=max(depth_levels):
             plt.gca().set_xticklabels([])
-        plt.xlim([start, end])            
-#plot_all_dl_time_series()
+        plt.xlim(xlim)   
+        plt.ylim(ylim)         
