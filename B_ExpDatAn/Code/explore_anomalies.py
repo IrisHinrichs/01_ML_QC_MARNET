@@ -50,7 +50,7 @@ def statistics(stname='North Sea Buoy II', paracode='WT', dlevels='all',
     
     # number of possible quality flags
     n_qfs = 4
-     # %% define path and filename
+     # define path and filename
     strings = get_filestring(stname)
     file = datapath+strings
     df = read_station_data(file)
