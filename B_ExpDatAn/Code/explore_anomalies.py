@@ -109,8 +109,10 @@ def anomaly_exploration():
             print(filestr)
             data=read_station_data(filestr=datapath+filestr)
     
-            # Find data with quality flag set to 4 or 3 in validation level 3
-            val3_qf3_or_4 = data[data.QF3.isin([3,4])]
+            # Find data with quality flag set to 4 or 3 in both validation levels
+            mask = (data.QF3.isin([3,4])) | (data.QF1.isin([3,4]))
+            val3_qf3_or_4 = data.loc[mask]
+            
             
             # unique depth levels of current station
             unique_d=list(set(data.Z_LOCATION))
@@ -518,8 +520,8 @@ def combine_anomalies(anom_meta, gap_thresh=12):
     return anomalies        
     
 
-#anomaly_exploration()
+anomaly_exploration()
 # plot_anomaly_mdata()
-visualize_anomalies()
+#visualize_anomalies()
 
 
