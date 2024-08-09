@@ -8,7 +8,7 @@ import pandas as pd
 import datetime as dt
 from pandas._libs.tslibs import timedeltas
 import matplotlib.pyplot as plt
-from common_variables import datapath, layout
+from common_variables import datapath, layout, stationsdict, fs, paramdict
 import matplotlib as mtpl
 from matplotlib.dates import DateFormatter
 import matplotlib.dates as mdates
@@ -128,7 +128,7 @@ def plot_all_dl_time_series(station='North Sea Buoy III', p='WT',
     dy= 0.5
     ylim = [data_tslice.DATA_VALUE.min()-dy, data_tslice.DATA_VALUE.max()+dy]
     xlim = [start, end]
-    plt.rcdefaults()
+    #plt.rcdefaults()
     fig = plt.figure(layout=layout)
     
     #define colormap
@@ -148,10 +148,11 @@ def plot_all_dl_time_series(station='North Sea Buoy III', p='WT',
         plt.subplot(len(depth_levels), 1, counter_d)
         
         # anomlies Val 1
-        plt.plot(data_tslice[data_tslice.Z_LOCATION==d*-1].DATA_VALUE, 'o', markersize=2)
+        data_d = data_tslice[data_tslice.Z_LOCATION==d*-1]
+        plt.plot(data_d[data_d.QF1.isin([3,4])].DATA_VALUE, 'ko',alpha=0.2, markersize=7)
         
         # anomalies Val 2
-        plt.plot(data_tslice[data_tslice.Z_LOCATION==d*-1].DATA_VALUE, 'o', markersize=2)
+        plt.plot(data_d[data_d.QF3.isin([3,4])].DATA_VALUE, 'ro',alpha=0.2, markersize=7)
         
         # DATA_VALUES
         plt.plot(data_tslice[data_tslice.Z_LOCATION==d*-1].DATA_VALUE, 'o', markersize=2)
@@ -163,5 +164,11 @@ def plot_all_dl_time_series(station='North Sea Buoy III', p='WT',
         plt.grid()
         if d!=max(depth_levels):
             plt.gca().set_xticklabels([])
-        plt.xlim(xlim)   
+        plt.xlim(xlim) 
+        
+        pstring = paramdict[p].replace(' '+ylabelstr, '')
+        titlestring = stationsdict[station].replace('[° C]', '')+', '+pstring+', '+\
+                       start.strftime('%d.%m.%Y %H:%M:%S')+'-'+end.strftime('%d.%m.%Y %H:%M:%S')
+        plt.suptitle(titlestring, fontsize=fs, wrap=True)
+        plt.ylabel(ylabelstr)
         plt.ylim(ylim)         
