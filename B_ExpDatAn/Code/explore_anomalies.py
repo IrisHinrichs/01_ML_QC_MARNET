@@ -409,7 +409,7 @@ def visualize_anomalies():
                     
                 
                 # iterate over all anomalies and viusalize the data
-                extension = 20 # also visualize ten hours before and after
+                extension = 25 # also visualize t25 hours before and after
                                 # start and end of anomaly
 
                 for ind in range(0,len(data)):
