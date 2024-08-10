@@ -407,20 +407,24 @@ def visualize_anomalies():
                     len_data_old = len(data)
                     data = combine_anomalies(data)
                     
-                # convert string stating temporal duration to integer of hours
-                dur_hours = data.LENGTH
                 
                 # iterate over all anomalies and viusalize the data
                 extension = 20 # also visualize ten hours before and after
                                 # start and end of anomaly
-                figcounter=0
+
                 for ind in range(0,len(data)):
-                    figname = 'anomalie_'+str(figcounter)+'.png'
+
                     fig = plt.figure()
                     # time stamp of starting point of current anomaly
                     start_anom =dt.datetime.strptime(data.index[ind], '%Y-%m-%d %H:%M:%S')
                     # length of current anomaly
                     len_anom = data.LENGTH.iloc[ind]
+                    
+                    start_str = data.index[ind].replace(' ', '_')
+                    start_str = start_str.replace(':', '-')
+                    end_str = str(start_anom+dt.timedelta(hours=int(len_anom))).replace(' ', '_')
+                    end_str = end_str.replace(':', '-')
+                    figname = start_str+'__'+end_str+'.png'
                     # start of visualization
                     start_vis = start_anom-dt.timedelta(hours=extension)
                     # end of visualization
@@ -455,7 +459,6 @@ def visualize_anomalies():
                     plt.show()
                     fig.savefig(savefigpath+figname, bbox_inches=bbox_inches)
                     plt.close(fig)
-                    figcounter+=1
                    
                    
     
@@ -520,8 +523,8 @@ def combine_anomalies(anom_meta, gap_thresh=12):
     return anomalies        
     
 
-anomaly_exploration()
+# anomaly_exploration()
 # plot_anomaly_mdata()
-#visualize_anomalies()
+visualize_anomalies()
 
 
