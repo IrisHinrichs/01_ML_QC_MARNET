@@ -8,9 +8,7 @@ import pandas as pd
 import datetime as dt
 from pandas._libs.tslibs import timedeltas
 import matplotlib.pyplot as plt
-from common_variables import datapath, layout, stationsdict, fs, paramdict
-import matplotlib as mtpl
-from matplotlib.dates import DateFormatter
+from common_variables import datapath, layout, stationsdict, fs, paramdict, cm, bbox_inches
 import matplotlib.dates as mdates
 
 
@@ -94,10 +92,10 @@ def convert_duration_string(dur_raw='263 days 21:00:00'):
     return dur_hours
 
 def plot_all_dl_time_series(station='North Sea Buoy III', p='WT', 
-                            start=dt.datetime(2022,11,11,13), end=dt.datetime(2022,11,14,9)):
+                            start=dt.datetime(2022,11,11,13), end=dt.datetime(2022,11,14,9), dl='all'):
     '''
-    Plot MARNET data of a certain parameter on all depth levels of a certain station in a certain 
-    time period 
+    Plot MARNET data of a certain parameter on definde depth levels of a certain station in a certain 
+    time period and save figure in Figure-directory 
 
     Parameters
     ----------
@@ -109,6 +107,10 @@ def plot_all_dl_time_series(station='North Sea Buoy III', p='WT',
         Beginning of time period.
     end : datetime.datetime
         End of time period.
+    dl: list or str
+        list of depth levels that are to be plotted. Default is 'all', meaning
+        that all depth levels correponding to station and observed parameter are 
+        plotted
 
     Returns
     -------
@@ -130,7 +132,11 @@ def plot_all_dl_time_series(station='North Sea Buoy III', p='WT',
     xlim = [start, end]
     #plt.rcdefaults()
     fig = plt.figure(layout=layout)
-    
+    plt.rcParams["figure.figsize"][1] = 14*cm 
+    start_str = str(start).replace(' ', '_')
+    start_str = start_str.replace(':', '-')
+    end_str = str(end).replace(' ', '_')
+    end_str = end_str.replace(':', '-')
     #define colormap
     if p == 'WT':
         col='blue'
@@ -139,10 +145,19 @@ def plot_all_dl_time_series(station='North Sea Buoy III', p='WT',
         col='purple'
         ylabelstr = '[]'
         
-    
-    # depth levels
-    depth_levels = [abs(d) for d in data_tslice.Z_LOCATION.unique()]
-    depth_levels.sort(reverse=False)
+    if isinstance(dl, str) and dl =='all':
+        # depth levels
+        depth_levels = [abs(d) for d in data_tslice.Z_LOCATION.unique()]
+        depth_levels.sort(reverse=False)
+        depthstr = dl
+    else:
+        depth_levels = dl
+        depthstr = '_'.join([str(d) for d in dl])
+        
+    savefigpath = '../Figures/'+station.replace(' ', '_')+\
+                    '/_'+p+\
+                    '_'+start_str+'_'+end_str+\
+                    '_'+depthstr+'.png'
     counter_d = 1
     for d in depth_levels:
         plt.subplot(len(depth_levels), 1, counter_d)
@@ -155,9 +170,10 @@ def plot_all_dl_time_series(station='North Sea Buoy III', p='WT',
         plt.plot(data_d[data_d.QF3.isin([3,4])].DATA_VALUE, 'ro',alpha=0.2, markersize=7)
         
         # DATA_VALUES
-        plt.plot(data_tslice[data_tslice.Z_LOCATION==d*-1].DATA_VALUE, 'o', markersize=2)
-        counter_d+=1
-        plt.title(str(abs(d)))
+        plt.plot(data_tslice[data_tslice.Z_LOCATION==d*-1].DATA_VALUE, 'o',
+                 color=col,markersize=2)
+        
+        plt.annotate(str(abs(d))+' m', xy=(0.05, 0.05), xycoords='axes fraction')
         
         plt.gca().xaxis.set_major_formatter(
         mdates.ConciseDateFormatter(plt.gca().xaxis.get_major_locator()))
@@ -169,6 +185,9 @@ def plot_all_dl_time_series(station='North Sea Buoy III', p='WT',
         pstring = paramdict[p].replace(' '+ylabelstr, '')
         titlestring = stationsdict[station].replace('[° C]', '')+', '+pstring+', '+\
                        start.strftime('%d.%m.%Y %H:%M:%S')+'-'+end.strftime('%d.%m.%Y %H:%M:%S')
-        plt.suptitle(titlestring, fontsize=fs, wrap=True)
+        if counter_d==1:
+            plt.title(titlestring, fontsize=fs, wrap=True)
         plt.ylabel(ylabelstr)
-        plt.ylim(ylim)         
+        plt.ylim(ylim) 
+        counter_d+=1       
+        fig.savefig(savefigpath, bbox_inches=bbox_inches)
