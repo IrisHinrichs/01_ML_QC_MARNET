@@ -356,6 +356,7 @@ def visualize_anomalies():
     fstring = '_anomalies_'
    
     # define figure height
+    plt.rcParams['figure.figsize'][0]=16.5*cm
     plt.rcParams['figure.figsize'][1]=6*cm
     #plt.rcdefaults()
     
@@ -442,10 +443,11 @@ def visualize_anomalies():
                     plt.plot(vis_obs, '.', color=col, markersize=3, linewidth=2)
                     plt.grid()
                     pstring = paramdict[p].replace(' '+ylabelstr, '')
-                    titlestring = stationsdict[st].replace('[° C]', '')+', '+pstring+', Tiefe='+str(abs(d))+' m\n'+\
+                    titlestring = stationsdict[st].replace('[° C]', '')+', '+pstring+', '+\
                                     start_vis.strftime('%d.%m.%Y %H:%M:%S')+'-'+end_vis.strftime('%d.%m.%Y %H:%M:%S')
                     plt.title(titlestring, fontsize=fs, wrap=True)
                     plt.ylabel(ylabelstr)
+                    plt.annotate(str(abs(d))+' m', xy=(0.05, 0.05), xycoords='axes fraction')
                     
                     #
                     # date_form = DateFormatter("%b-%d")
