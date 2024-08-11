@@ -191,3 +191,41 @@ def plot_all_dl_time_series(station='North Sea Buoy III', p='WT',
         plt.ylim(ylim) 
         counter_d+=1       
         fig.savefig(savefigpath, bbox_inches=bbox_inches)
+        
+def plot_anomaly_legend():
+    yvals = [0.3,0.5,0.7]
+    fig = plt.figure(layout=layout)
+    plt.rcParams["figure.figsize"][0] = 7*cm 
+    plt.rcParams["figure.figsize"][1] = 3*cm 
+    
+    #define colormap
+    colT='blue'
+    colS='purple'
+   
+    # anomlies Val 1
+    plt.plot([0.2, 0.3],[yvals[2]]*2, 'ko',alpha=0.2, markersize=7)
+    plt.plot([0.2, 0.3],[yvals[1]]*2, 'ko',alpha=0.2, markersize=7)
+    
+    # anomalies Val 2
+    plt.plot([0.2,0.3],[yvals[1]]*2, 'ro',alpha=0.2, markersize=7)
+    plt.plot([0.2,0.3],[yvals[0]]*2, 'ro',alpha=0.2, markersize=7)
+    
+    # DATA_VALUES
+    plt.plot([0.2]*3,yvals, 'o',
+             color=colT,markersize=2)
+    plt.plot([0.3]*3,yvals, 'o',
+             color=colS,markersize=2)
+
+    plt.annotate('T', xy=(0.2, 0.9),xytext=(0.18, 0.85))#, xycoords='axes fraction')
+    plt.annotate('S', xy=(0.3, 0.9),xytext=(0.28, 0.85))#, xycoords='axes fraction')
+    plt.annotate('markiert in Validierungsstufe', xy=(0.4, 0.9), xytext=(0.38, 0.85))#, xycoords='axes fraction')
+    plt.annotate('1', xy=(0.4, 0.7), xytext=(0.38, 0.65))#, xycoords='axes fraction')
+    plt.annotate('1 und 3', xy=(0.4, 0.5), xytext=(0.38, 0.45))#, xycoords='axes fraction')
+    plt.annotate('3', xy=(0.4, 0.3), xytext=(0.38, 0.25))#, xycoords='axes fraction')
+    plt.xlim([0.16,1.9])
+    plt.ylim([0.2,1])
+    plt.axis('off')
+    fig.savefig('../Figures(legend_anomalies.png')
+    
+
+    
