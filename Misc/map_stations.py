@@ -6,56 +6,46 @@ Created on Mon Aug 12 15:01:42 2024
 """
 
 
-import geopandas as gpd
-from shapely.geometry import LineString, Point
-import pandas as pd
+#import geopandas as gpd
+#from shapely.geometry import LineString, Point
+import cartopy.crs as ccrs
+#import pandas as pd
 import matplotlib.pyplot as plt
-from common_variables import  layout, cm, stationsdict,\
-     fs, fontdict, bbox_inches
+# from common_variables import  layout, cm, stationsdict,\
+     # fs, fontdict, bbox_inches
+     
+#https://scitools.org.uk/cartopy/docs/latest/gallery/lines_and_polygons/ocean_bathymetry.html
 
 
 def map_stations(lat= [54.5981666667,54.4995, 54.9983333333, 54.6827833333],\
                  lon=[11.1491666667,10.2736666667, 6.3515, 6.75445]):
     
     # define everything that has to do with the resulting figure
-    plt.rcParams['figure.figsize'][1]=10*cm
-    fig = plt.figure(layout=layout)
-    savefigpath = '../Figures/temporal_coverage.png'
+    # plt.rcParams['figure.figsize'][1]=10*cm
+    # fig = plt.figure(layout=layout)
+    # savefigpath = '../Figures/temporal_coverage.png'
+    dlat = 1
+    dlon = 1
     
-    
-    # load data for world map
-    world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-    
+    ax = plt.axes(projection=ccrs.PlateCarree())
+    ax.stock_img()
    
 
-    # turn positions into shapely.LineString object
-    if len(lat) >1 and len(lon)>1:
-        shobj = LineString(list(zip(lon, lat)))
-    else:
-        shobj = Point((lon[0],lat[0]))
+    # # turn positions into shapely.LineString object
+    # if len(lat) >1 and len(lon)>1:
+    #     shobj = LineString(list(zip(lon, lat)))
+    # else:
+    #     shobj = Point((lon[0],lat[0]))
 
+    # plot map with regions and position values
+    # ax = world.plot(
+        # color=[0.8,0.8,0.8])
+    plt.plot(lon, lat, '.')
+    plt.xlim([min(lon)-dlon, max(lon)+dlon])
+    plt.ylim([min(lat)-dlat, max(lat)+dlat])
+    plt.grid()
+    plt.show()
+    
+    return 
 
-    # check intersection between linestring and Copernicus Regions polygons
-    check_table = pd.DataFrame(columns = ['check'], index = copernicus_regions.Name)
-    for i in range(0, len(copernicus_regions)):
-        polygon = copernicus_regions.geometry.loc[i]
-        check_table['check'][i]= polygon.intersects(shobj)
-
-    # get region abbrevation of intersecting region
-    ind = list(check_table[check_table['check']==True].index)
-    region = []
-    for i in ind:
-        reg = list(copernicus_regions.Region[copernicus_regions.Name==i])
-        region.append(reg[0])
-        
-    if show_map:
-        # plot map with regions and position values
-        ax = world.plot(
-            color=[0.8,0.8,0.8])
-        copernicus_regions.plot(column = 'Name', facecolor = 'None',
-                                     legend = list(copernicus_regions.Name),
-                                     linewidth = 3, ax = ax)
-        plt.plot(lon, lat, '.')
-        plt.grid()
-        plt.show()
-    return list(set(region))
+map_stations()
