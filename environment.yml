@@ -5,6 +5,7 @@ channels:
   - https://conda.anaconda.org/conda-forge/
   - defaults
 dependencies:
+  - python=3.9.13
   - numpy=1.21.5=py39h7a0a035_3
   - openssl=1.1.1q=h2bbff1b_0
   - pandas=1.4.4=py39hd77b12b_0
