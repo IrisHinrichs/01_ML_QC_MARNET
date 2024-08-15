@@ -64,6 +64,12 @@ def map_stations(lat= [54.5981666667,54.4995, 54.9983333333, 54.6827833333],\
      plt.plot(lon, lat, 'kx')
      plt.xlabel('Geographische Länge [°]')
      plt.ylabel('Geographische Breite [°]')
+     plt.clim(-60,0)
+     cb = plt.colorbar()
+     labels = cb.ax.get_yticklabels()
+     labels = [lab.replace('-','') for lab in labels]
+     cb.ax.set_yticklabels(labels)
+     cb.ax.ylabel('Wassertiefe [m]')
      plt.grid()
      plt.show()
     
