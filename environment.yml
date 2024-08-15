@@ -6,7 +6,6 @@ channels:
   - defaults
 dependencies:
   - python=3.9.13
-  - cartopy=0.23.0
   - netcdf4=1.6.3=nompi_py39hec31bf5_100
   - numpy=1.21.5=py39h7a0a035_3
   - matplotlib==3.6.0=py39hcbf5309_0
