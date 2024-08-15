@@ -27,28 +27,44 @@ def map_stations(lat= [54.5981666667,54.4995, 54.9983333333, 54.6827833333],\
      # plt.rcParams['figure.figsize'][1]=10*cm
      # fig = plt.figure(layout=layout)
      # savefigpath = '../Figures/temporal_coverage.png'
+     dlon= 0.5
      dlat = 1
-     dlon = 1
+     cmap = matplotlib.cm.bone
+     
+     cmap.set_bad('gray',1.)
+     
+     # extent of map
+     extent=[min(lon)-dlon, max(lon)+dlon, min(lat)-dlat, max(lat)+dlat]
+     
 
      # load GEBCO
      gebcofile='Misc\GEBCO_14_Aug_2024_1671b01b7c83\gebco_2024_n67.0_s50.0_w10.0_e30.0.nc'
      rg = netCDF4.Dataset(gebcofile, 'r',format="NETCDF4")
      elev = rg['elevation'][:]
+     elev= elev.astype(float)
      glat =rg['lat'][:]
      glon = rg['lon'][:]
      rg.close()
 
+     # reduce size of GEBCO elevation field to area surrounding the station's positions
+     indlon = np.where((glon>=extent[0])&(glon<=extent[1]))
+     indlat = np.where((glat>=extent[2])&(glat<=extent[3]))
+     elev =elev[np.ix_(indlat[0],indlon[0])]
+     
+
      # create landmask
-     landmask = (elev>=0)
+     landmask = (elev>0)
+     # set landvalues to nan
+     elev[landmask]=np.nan
      
      # plot elevation
-     plt.imshow(np.flipud(elev), interpolation=None, extent=[min(glon), max(glon), min(glat), max(glat)]) 
-
-     # plot landmask
-     plt.imshow(np.flipud(landmask), cmap='gist_gray', alpha=0.2, extent=[min(glon), max(glon), min(glat), max(glat)])
+     plt.imshow(np.flipud(elev), interpolation=None, extent=extent, cmap=cmap) 
 
      # Add station positions
-     plt.plot(lon, lat, '.')
+     plt.plot(lon, lat, 'kx')
+     plt.xlabel('Geographische Länge [°]')
+     plt.ylabel('Geographische Breite [°]')
+     plt.grid()
      plt.show()
     
      return 
