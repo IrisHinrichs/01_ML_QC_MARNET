@@ -4,13 +4,24 @@ Created on Tue Jul 16 20:13:09 2024
 
 @author: Iris
 """
-from matplotlib import pyplot as plt
+
 import matplotlib as mtpl
-from datetime import datetime as dt
 import numpy as np
-from utilities import read_station_data, get_filestring
-from common_variables import datapath, layout, cm, stations, stationsdict,\
-    params, paramdict, tlims, fs, fontdict, bbox_inches
+from common_variables import (
+    bbox_inches,
+    cm,
+    datapath,
+    fontdict,
+    fs,
+    layout,
+    paramdict,
+    params,
+    stations,
+    stationsdict,
+    tlims,
+)
+from matplotlib import pyplot as plt
+from utilities import get_filestring, read_station_data
 
 # define figure height
 plt.rcParams['figure.figsize'][1]=14*cm
@@ -47,20 +58,31 @@ def make_figure():
                 ddata = data[data['Z_LOCATION']==d] # entries corresponding to depth level d
                 
                 ax=plt.subplot(nrows, ncols, count_rows*2+count_cols)
-                            
+
                 # data with qf=2
-                ddata_good = ddata[ddata['QF3']==2]
-                plt.plot(ddata_good.DATA_VALUE,marker, markersize=msize,fillstyle=fillst, color=cmp[d_counter])
-                
-                if st==stations[0]:
+                ddata_good = ddata[ddata["QF3"] == 2]
+                plt.plot(
+                    ddata_good.DATA_VALUE,
+                    marker,
+                    markersize=msize,
+                    fillstyle=fillst,
+                    color=cmp[d_counter],
+                )
+
+                if st == stations[0]:
                     plt.title(paramdict[p], fontsize=fs)
-                if p!='SZ':
-                    plt.text(1.05, 0.5, stationsdict[st], 
-                        horizontalalignment='center',
-                        verticalalignment='center', 
-                        transform=plt.gca().transAxes, 
-                        rotation=90, **fontdict)
-                d_counter+=1
+                if p != "SZ":
+                    plt.text(
+                        1.05,
+                        0.5,
+                        stationsdict[st],
+                        horizontalalignment="center",
+                        verticalalignment="center",
+                        transform=plt.gca().transAxes,
+                        rotation=90,
+                        **fontdict,
+                    )
+                d_counter += 1
             # keep current ylims
             ylims = plt.ylim()
             

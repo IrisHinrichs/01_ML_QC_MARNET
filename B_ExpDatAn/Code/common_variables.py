@@ -7,8 +7,8 @@ Created on Fri Jul 19 16:11:41 2024
 '''
 Variables common for several scripts
 '''
-import datetime as dt
-from matplotlib import pyplot as plt
+import datetime as dt  # noqa: E402
+from matplotlib import pyplot as plt  # noqa: E402
 
 
 # Path to original data

@@ -6,14 +6,9 @@ Created on Mon Jul 29 15:32:37 2024
 """
 import math
 import datetime as dt
-import time
-import numpy as np
 import pandas as pd # version 2.1.4 auf dem Laptop zu Hause, 1.4.4 bei der Arbeit
 from utilities import read_station_data, get_filestring, diff_time_vec, convert_duration_string
 from matplotlib import pyplot as plt 
-from matplotlib.legend_handler import HandlerTuple
-import matplotlib as mtpl
-from matplotlib.dates import DateFormatter
 import matplotlib.dates as mdates
 
 
@@ -276,7 +271,6 @@ def plot_anomaly_mdata():
     savefigpath = '../Figures/anomaly_lengths.png'
     marker = 'o'
     msize=3
-    fillst= 'full'
     al=0.2
    
     for st in stations:
@@ -298,7 +292,6 @@ def plot_anomaly_mdata():
                 dur_hours = data.LENGTH
                 
                
-                ylabelstr = 'Länge [Stunden]'
                 
                 #define colormap
                 if p == 'WT':
@@ -347,7 +340,7 @@ def plot_anomaly_mdata():
             else:
                 # get current yticklabel locations
                 yticklabels = plt.gca().get_yticklabels()
-                yticklabels = [l._text.replace(chr(8722), '') for l in yticklabels]
+                yticklabels = [ll._text.replace(chr(8722), '') for ll in yticklabels]
             count_cols+=1 
         count_rows+=1 
     fig.savefig(savefigpath, bbox_inches=bbox_inches)
@@ -488,7 +481,7 @@ def combine_anomalies(anom_meta, gap_thresh=12):
     anomalies=pd.DataFrame(columns= list(anom_meta.columns))
     cont=False
     for ind in range(0,len(anom_meta)):
-        if cont == True:
+        if cont is True:
             cont=False
             continue
         # length of current anomaly
