@@ -23,7 +23,7 @@ def map_stations(
 ):
     # define everything that has to do with the resulting figure
     plt.rcParams["figure.figsize"][1] = 10 * cm
-    fig= plt.figure(layout=layout)
+    plt.figure(layout=layout)
     savefigpath = "Misc/map_stations.png"
     dlon = 0.5
     dlat = 1
@@ -55,8 +55,10 @@ def map_stations(
     elev[landmask] = np.nan
 
     # plot elevation
-    ax = plt.axes()
-    im=plt.imshow(np.flipud(elev), interpolation=None, extent=extent, cmap=cmap)
+    axx = plt.axes()
+    im = plt.imshow(
+        np.flipud(elev), interpolation=None, extent=extent, cmap=cmap, aspect="auto"
+    )
 
     # Add station positions
     plt.plot(lon, lat, "rx")
@@ -65,12 +67,12 @@ def map_stations(
     plt.clim(-60, 0)
     plt.grid()
     
-    # colorbar
+    #  colorbar
     #cax = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])
     #cb = plt.colorbar(im, cax=cax, label = "Wassertiefe [m]") 
-    cb = plt.colorbar(im, label = "Wassertiefe [m]", shrink=0.5) 
+    cb = plt.colorbar(im, label = "Wassertiefe [m]", shrink=1.0, ax=axx) 
     cb.ax.tick_params(labelsize=fs)
-    labels = [str(ll) for ll in range(60, -10, -10)]
+    labels = [str(ll).replace('-', '') for ll in cb.get_ticks()]
     cb.ax.set_yticks(cb.get_ticks(), labels, fontsize=fs)
     
     plt.savefig(savefigpath, bbox_inches=bbox_inches)
