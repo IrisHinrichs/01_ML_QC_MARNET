@@ -6,7 +6,6 @@ from common_variables import (
     bbox_inches,
     cm,
     datapath,
-    fontdict,
     fs,
     layout,
     paramdict,
@@ -17,7 +16,6 @@ from common_variables import (
 )
 from matplotlib import pyplot as plt
 from utilities import get_filestring, read_station_data
-from statsmodels.tsa.stattools import acf
 
 import os
 import sys
@@ -25,6 +23,15 @@ import sys
 os.chdir(sys.path[0]) # change to modules parent directory
 
 nlags = 96 # for autocorrelation
+
+# define figure height
+plt.rcParams['figure.figsize'][1]=14*cm
+fig = plt.figure(layout=layout)
+
+savefigpath = '../Figures/periodograms.png'
+marker = '.'
+msize=1
+fillst= 'full'
 
 # for Lomb-Scargle Periodogram
 periods = np.linspace(1,30, 30)
@@ -34,11 +41,14 @@ freqs=[np.pi*2/p for p in periods]
 count_rows=0
 nrows = len(stations)
 ncols=len(params)
+ax_1_list = [] # for WT
+ax_2_list = [] # for SZ
+#ax_invs= plt.subplots(1,2)
 for st in stations:
         count_cols=1
         for p in params:
 
-            #define colormap
+            #define colormap according to parameter
             if p == 'WT':
                 cmp =mtpl.colormaps['Blues']
             else:
@@ -54,7 +64,9 @@ for st in stations:
             extent = [0.5, len(periods)+0.5, 0.5, len(unique_d)+0.5]
             counter_d = 0
             for d in unique_d:
-               ddata = data[data['Z_LOCATION']==d] # entries corresponding to depth level d
+               ddata = data[(data['Z_LOCATION']==d)&(data['QF3']==2)] # entries corresponding to depth level d and good data
+
+
                #ddata = ddata.asfreq('h') # change to hourly frequency
                # not recommended, replaces all values after minutes shift with NaNs
                # resampling and forward filling
@@ -68,9 +80,47 @@ for st in stations:
                vals = lombscargle(ddata.index, ddata.DATA_VALUE, freqs=freqs, normalize=True, precenter=True)
                prdgram_array[counter_d, :]=[v/max(vals) for v in vals]
                counter_d+=1
-            # plot current acf_array
-            plt.figure()
-            plt.imshow(prdgram_array, cmap=cmp,extent= extent, aspect='auto')
-            plt.colorbar()
-            plt.title(st+', '+p)
-            print('ende')
+            # plot current prdgram_array
+            ax=plt.subplot(nrows, ncols, count_rows*2+count_cols)
+            im=plt.imshow(prdgram_array, cmap=cmp,extent= extent, aspect='auto')
+            plt.grid()
+            unique_d.reverse()
+            yticks= [yt+1 for yt in list(range(0, len(unique_d)))]
+            plt.gca().set_yticks(
+                yticks
+            )
+            plt.gca().set_yticklabels(
+                [str(d).replace("-", "") for d in unique_d],
+            )
+            if st == stations[0]:
+                plt.title(paramdict[p], fontsize=fs)
+            #if p != "SZ":
+                # plt.text(
+                #     1.3,
+                #     0.5,
+                #     stationsdict[st],
+                #     horizontalalignment="center",
+                #     verticalalignment="center",
+                #     transform=plt.gca().transAxes,
+                #     rotation=90,
+                #     **fontdict,
+                # )
+            # save current axis
+            exec('ax_'+str(count_cols)+'_list.append(ax)')
+            # customize axes labels etc.
+            plt.yticks(fontsize= fs)
+            if count_rows*2+count_cols not in [nrows*ncols-1, nrows*ncols]:
+                ax.set_xticklabels([])
+            else:
+                plt.xticks(fontsize=fs)
+                exec('axes=ax_'+str(count_cols)+'_list')
+                if p == 'WT':
+                    plt.colorbar(im,ax=axes, pad=0.05, label='  '.join(stationsdict.values())) # type: ignore
+                else:
+                    plt.colorbar(im,ax=axes, pad=0.05) # type: ignore
+                #fig.text(0.5, 0.04, 'Periode [h]', ha='center')
+                fig.text(0.04, 0.5, 'Wassertiefe [m]', va='center', rotation='vertical')
+            count_cols+=1 
+        count_rows+=1
+
+fig.savefig(savefigpath, bbox_inches=bbox_inches)
