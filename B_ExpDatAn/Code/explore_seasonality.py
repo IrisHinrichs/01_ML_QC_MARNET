@@ -8,6 +8,7 @@ from common_variables import (
     datapath,
     fs,
     layout,
+    fontdict,
     paramdict,
     params,
     stations,
@@ -25,7 +26,7 @@ os.chdir(sys.path[0]) # change to modules parent directory
 nlags = 96 # for autocorrelation
 
 # define figure height
-plt.rcParams['figure.figsize'][1]=14*cm
+plt.rcParams['figure.figsize'][1]=16*cm
 fig = plt.figure(layout=layout)
 
 savefigpath = '../Figures/periodograms.png'
@@ -94,17 +95,17 @@ for st in stations:
             )
             if st == stations[0]:
                 plt.title(paramdict[p], fontsize=fs)
-            #if p != "SZ":
-                # plt.text(
-                #     1.3,
-                #     0.5,
-                #     stationsdict[st],
-                #     horizontalalignment="center",
-                #     verticalalignment="center",
-                #     transform=plt.gca().transAxes,
-                #     rotation=90,
-                #     **fontdict,
-                # )
+            if p != "SZ":
+                plt.text(
+                    1.05,
+                    0.5,
+                    stationsdict[st],
+                    horizontalalignment="center",
+                    verticalalignment="center",
+                    transform=plt.gca().transAxes,
+                    rotation=90,
+                    **fontdict,
+                )
             # save current axis
             exec('ax_'+str(count_cols)+'_list.append(ax)')
             # customize axes labels etc.
@@ -113,13 +114,18 @@ for st in stations:
                 ax.set_xticklabels([])
             else:
                 plt.xticks(fontsize=fs)
+                plt.colorbar(im,  label = 'normierte Energiedichte', orientation='horizontal')
+                plt.xlabel('Periode [h]')
                 exec('axes=ax_'+str(count_cols)+'_list')
-                if p == 'WT':
-                    plt.colorbar(im,ax=axes, pad=0.05, label='  '.join(stationsdict.values())) # type: ignore
-                else:
-                    plt.colorbar(im,ax=axes, pad=0.05) # type: ignore
-                #fig.text(0.5, 0.04, 'Periode [h]', ha='center')
-                fig.text(0.04, 0.5, 'Wassertiefe [m]', va='center', rotation='vertical')
+                # if p == 'WT':
+                #     cblabel = list(stationsdict.values())
+                #     cblabel.reverse()
+                #     cblabel='      '.join(cblabel)
+                #     plt.colorbar(im,ax=axes, pad=0.025, label=cblabel)   # noqa: F821
+                # else:
+                #     plt.colorbar(im,ax=axes, pad=0.025) # noqa: F821
+                
+                fig.text(x=-0.05, y=0.6, s='Wassertiefe [m]', va='center', rotation='vertical')
             count_cols+=1 
         count_rows+=1
 
