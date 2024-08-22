@@ -26,21 +26,34 @@ os.chdir(sys.path[0]) # change to modules parent directory
 nlags = 96 # for autocorrelation
 def plot_periodograms(res='h'):
     '''
-    Plots Peridograms for all time series (all stations, parameter, depth levels)
-    for periods <= 30 hours
+    Plots Peridograms for all time series (all stations, parameters, depth levels)
+    for periods in hours or days
+
+    Parameters
+    ----------
+    res : str
+        String stating the temporal resolution of the time periods to analyze.
+        Default is 'h' for hourly resolution.
+
+    Returns
+    -------
+    None.
+
     '''
     # define figure height
     plt.rcParams['figure.figsize'][1]=16*cm
     fig = plt.figure(layout=layout)
 
-    savefigpath = '../Figures/periodograms_30hrs.png'
-    marker = '.'
-    msize=1
-    fillst= 'full'
-
     # for Lomb-Scargle Periodogram
-    periods = np.linspace(1,30, 30)
+    if res=='h': # hourly resolution of periods
+        periods = np.linspace(1,30, 30)
+        pstring = '30hrs'
+    elif res=='d':
+        periods = np.linspace(1,380, 380)
+        pstring='380days'
+
     freqs=[np.pi*2/p for p in periods]
+    savefigpath = '../Figures/periodograms_'+pstring+'.png'
 
 
     count_rows=0
@@ -69,22 +82,26 @@ def plot_periodograms(res='h'):
                 extent = [0.5, len(periods)+0.5, 0.5, len(unique_d)+0.5]
                 counter_d = 0
                 for d in unique_d:
-                ddata = data[(data['Z_LOCATION']==d)&(data['QF3']==2)] # entries corresponding to depth level d and good data
+
+                    ddata = data[(data['Z_LOCATION']==d)&(data['QF3']==2)] # entries corresponding to depth level d and good data
+                    if res=='d': # daily resolution of periods
+                      #resampling from hourly to daily resolution is necessary
+                        ddata = ddata.resample('D').mean()  
 
 
-                #ddata = ddata.asfreq('h') # change to hourly frequency
-                # not recommended, replaces all values after minutes shift with NaNs
-                # resampling and forward filling
-                #ddata_res = ddata.resample('h').ffill()
+                    #ddata = ddata.asfreq('h') # change to hourly frequency
+                    # not recommended, replaces all values after minutes shift with NaNs
+                    # resampling and forward filling
+                    #ddata_res = ddata.resample('h').ffill()
 
-                # attempt, autocorrelation function
-                #acf_array[counter_d, :] = acf(ddata_res.DATA_VALUE, nlags=nlags)
+                    # attempt, autocorrelation function
+                    #acf_array[counter_d, :] = acf(ddata_res.DATA_VALUE, nlags=nlags)
 
 
-                # attempt, Lomb-Scargle Periodogram
-                vals = lombscargle(ddata.index, ddata.DATA_VALUE, freqs=freqs, normalize=True, precenter=True)
-                prdgram_array[counter_d, :]=[v/max(vals) for v in vals]
-                counter_d+=1
+                    # attempt, Lomb-Scargle Periodogram
+                    vals = lombscargle(ddata.index, ddata.DATA_VALUE, freqs=freqs, normalize=True, precenter=True)
+                    prdgram_array[counter_d, :]=[v/max(vals) for v in vals]
+                    counter_d+=1
                 # plot current prdgram_array
                 ax=plt.subplot(nrows, ncols, count_rows*2+count_cols)
                 im=plt.imshow(prdgram_array, cmap=cmp,extent= extent, aspect='auto')
@@ -134,3 +151,6 @@ def plot_periodograms(res='h'):
             count_rows+=1
     fig.savefig(savefigpath, bbox_inches=bbox_inches)
     return
+
+
+plot_periodograms()
