@@ -542,7 +542,7 @@ def find_all_time_spans(time_vec, tdel):
     return tspans
                
 #plot_coverage()
-analyze_gaps()
+#analyze_gaps()
 #plot_max_time_spans(time_delta=False, frac=False)
 #plot_td()
 
