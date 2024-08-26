@@ -1,19 +1,12 @@
 import argparse
 from dataclasses import dataclass
 from typing import Tuple
-import sys
+import os
 import json
 
 import numpy as np
 
 from median_method import MedianMethod
-
-# read json file and append necessary attributes
-jsonfile = r"C:\Users\Iris\Documents\IU-Studium\Masterarbeit\01_ML_QC_MARNET\D_Model\median_method\manifest.json"
-f = open(jsonfile)
-jsondict = json.load(f)
-f.close()
-jsondict['executionType']='execute'
 
 
 
@@ -24,18 +17,9 @@ class CustomParameters:
 
 
 class AlgorithmArgs(argparse.Namespace):
-    # @staticmethod
-    # def from_sys_args() -> 'AlgorithmArgs':
-    #     #args: dict = json.loads(sys.argv[1])
-    #     #args: dict = json.loads(sys.argv[1].replace("'", '"'))
-    #     args: dict = json.loads(sys.argv[1].replace("'", '"'))
-    #     custom_parameter_keys = dir(CustomParameters())
-    #     filtered_parameters = dict(filter(lambda x: x[0] in custom_parameter_keys, args.get("customParameters", {}).items()))
-    #     args["customParameters"] = CustomParameters(**filtered_parameters)
-    #     return AlgorithmArgs(**args)
     @staticmethod
     def from_dict() -> 'AlgorithmArgs':
-        args: dict = jsondict
+        args: dict = read_json_file()
         custom_parameter_keys = dir(CustomParameters())
         filtered_parameters = dict(filter(lambda x: x[0] in custom_parameter_keys, args.get("customParameters", {}).items()))
         args["customParameters"] = CustomParameters(**filtered_parameters)
@@ -49,12 +33,11 @@ def set_random_state(config: AlgorithmArgs) -> None:
     np.random.seed(seed)
 
 
-def load_data(path: str) -> Tuple[np.ndarray, np.ndarray]:
+def load_data(path: str) -> Tuple[np.ndarray, np.ndarray]: # not necessary
     return np.genfromtxt(path,
                          skip_header=1,
                          delimiter=",",
                          usecols=[1])
-
 
 def execute(config, ts):
     set_random_state(config)
@@ -64,6 +47,16 @@ def execute(config, ts):
 
     scores = mm.fit_predict()
     return scores
+
+def read_json_file():
+     #read json file and append necessary attributes
+    abspath = os.path.dirname(os.path.realpath(__file__))
+    jsonfile= os.path.join(abspath ,"manifest.json")
+    f = open(jsonfile)
+    jsondict = json.load(f)
+    f.close()
+    jsondict['executionType']='execute'
+    return jsondict
 
 
 def run_mm_algorithm(ts):
@@ -79,13 +72,10 @@ def run_mm_algorithm(ts):
     else:
         raise ValueError(f"Unknown execution type '{config.executionType}'; expected 'execute'!")
     return scores
-
-# from utilities import get_filestring, read_station_data
-# from common_variables import datapath
-# filestring = get_filestring()
-# data = read_station_data()
-import pandas as pd
-file = r"C:\Users\Iris\Documents\IU-Studium\Masterarbeit\01_ML_QC_MARNET\D_Model\test_data\sby_need_full.csv" 
-data = pd.read_csv(file,usecols= ['value'])
-data = np.array(data)
-test = run_mm_algorithm(data)
+# Code for testing
+# import pandas as pd
+# abspath = os.path.abspath("D_Model")
+# file = os.path.join(abspath, "test_data","sby_need_full.csv") 
+# data = pd.read_csv(file,usecols= ['value'])
+# data = data['value'].to_numpy()
+# test = run_mm_algorithm(data)
