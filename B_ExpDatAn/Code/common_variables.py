@@ -14,7 +14,8 @@ from matplotlib import pyplot as plt  # noqa: E402
 
 
 # Path to original data
-datapath = os.path.abspath("A_Data")+'\\'
+datapath = os.path.dirname(os.path.abspath(__file__))
+print(datapath)
 
 
 # station names
