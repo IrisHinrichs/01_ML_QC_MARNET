@@ -10,7 +10,6 @@ import numpy as np
 from common_variables import (
     bbox_inches,
     cm,
-    datapath,
     fontdict,
     fs,
     layout,
@@ -21,7 +20,7 @@ from common_variables import (
     tlims,
 )
 from matplotlib import pyplot as plt
-from utilities import get_filestring, read_station_data
+from utilities import get_filestring, read_station_data, datapath
 
 # define figure height
 plt.rcParams['figure.figsize'][1]=14*cm

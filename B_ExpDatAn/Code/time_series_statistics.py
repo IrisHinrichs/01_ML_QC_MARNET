@@ -8,11 +8,11 @@ import datetime as dt
 import time
 import numpy as np
 import pandas as pd
-from utilities import read_station_data, get_filestring, diff_time_vec, convert_duration_string
+from utilities import datapath, read_station_data, get_filestring, diff_time_vec, convert_duration_string
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
 
-from common_variables import datapath, layout, cm, stations, stationsdict,\
+from common_variables import  layout, cm, stations, stationsdict,\
     params, paramdict, tlims, fs, fontdict, bbox_inches
     
 import os
