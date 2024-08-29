@@ -7,15 +7,9 @@ Created on Fri Jul 19 16:11:41 2024
 '''
 Variables common for several scripts
 '''
-import os
+
 import datetime as dt  # noqa: E402
 from matplotlib import pyplot as plt  # noqa: E402
-
-
-
-# Path to original data
-datapath = os.path.dirname(os.path.abspath(__file__))
-print(datapath)
 
 
 # station names

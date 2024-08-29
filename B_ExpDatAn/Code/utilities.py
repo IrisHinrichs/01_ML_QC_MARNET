@@ -4,12 +4,25 @@ Created on Thu Jul 18 14:57:32 2024
 
 @author: bd2107
 """
+import os
+from pathlib import Path
 import pandas as pd
 import datetime as dt
 from pandas._libs.tslibs import timedeltas
 import matplotlib.pyplot as plt
-from common_variables import datapath, layout, stationsdict, fs, paramdict, cm, bbox_inches
+from common_variables import  layout, stationsdict, fs, paramdict, cm, bbox_inches
 import matplotlib.dates as mdates
+def get_datapath(cur_path = __file__, parents=2):
+    # construct  absolute path to original data
+    datapath = os.path.dirname(os.path.abspath(__file__))
+    prepath =datapath
+    for ll in range(0,parents):
+        prepath = Path(prepath).parent.absolute()
+    datapath = prepath
+    datapath = prepath / 'A_Data'
+    return datapath
+    
+datapath = get_datapath()
 
 
 
@@ -226,6 +239,8 @@ def plot_anomaly_legend():
     plt.ylim([0.2,1])
     plt.axis('off')
     fig.savefig('../Figures(legend_anomalies.png')
+
     
+
 
     
