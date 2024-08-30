@@ -11,6 +11,7 @@ dependencies:
   - netcdf4=1.6.3=nompi_py39hec31bf5_100
   - numpy=1.21.5=py39h7a0a035_3
   - matplotlib==3.6.0=py39hcbf5309_0
+  - cartopy==0.22.0
   - openssl=1.1.1q=h2bbff1b_0
   - pandas=1.4.4=py39hd77b12b_0
   - pip=22.2.2=py39haa95532_0
