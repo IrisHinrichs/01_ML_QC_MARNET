@@ -44,12 +44,13 @@ def get_filestring(s='North Sea Buoy II',p='WT',start=dt.datetime(2020,1,1), end
 
     Returns
     -------
-    filestring : str
-        file name .
+    abs_path_file : str
+        absolute path and filename .
 
     '''
     filestring = '_'.join([s.replace(' ','_'),start.strftime('%Y%m%d'), end.strftime('%Y%m%d'), p,'all_.csv'])
-    return filestring
+    abs_path_file = os.path.join(datapath, filestring)
+    return abs_path_file
 
 def read_station_data(filestr):
     usecols=['TIME_VALUE','Z_LOCATION','DATA_VALUE', 'QF1', 'QF3']
