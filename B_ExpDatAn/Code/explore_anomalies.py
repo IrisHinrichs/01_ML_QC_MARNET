@@ -10,12 +10,22 @@ import pandas as pd # version 2.1.4 auf dem Laptop zu Hause, 1.4.4 bei der Arbei
 from utilities import read_station_data, get_filestring, diff_time_vec, convert_duration_string
 from matplotlib import pyplot as plt 
 import matplotlib.dates as mdates
-
-
-from common_variables import datapath, layout, cm, stations, stationsdict,\
-    params, paramdict, tlims, fs, fontdict, bbox_inches
-    
 import os
+
+
+from common_variables import (
+    layout,
+    cm,
+    stations,
+    stationsdict,
+    params,
+    paramdict,
+    tlims,
+    fs,
+    fontdict,
+    bbox_inches,
+)
+
 
 
 def statistics(stname='North Sea Buoy II', paracode='WT', dlevels='all', 
@@ -46,8 +56,7 @@ def statistics(stname='North Sea Buoy II', paracode='WT', dlevels='all',
     # number of possible quality flags
     n_qfs = 4
      # define path and filename
-    strings = get_filestring(stname)
-    file = datapath+strings
+    file = get_filestring(stname)
     df = read_station_data(file)
     
    
@@ -102,7 +111,7 @@ def anomaly_exploration():
         for p in params:
             filestr = get_filestring(st, p)
             print(filestr)
-            data=read_station_data(filestr=datapath+filestr)
+            data=read_station_data(filestr=filestr)
     
             # Find data with quality flag set to 4 or 3 in both validation levels
             mask = (data.QF3.isin([3,4])) | (data.QF1.isin([3,4]))
@@ -368,7 +377,7 @@ def visualize_anomalies():
                 
                 
             # read station data
-            station_data = read_station_data(datapath+get_filestring(st, p))
+            station_data = read_station_data(get_filestring(st, p))
             
            
             for f in os.listdir(curr_dir):

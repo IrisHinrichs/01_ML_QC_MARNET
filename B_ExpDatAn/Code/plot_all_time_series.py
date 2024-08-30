@@ -20,7 +20,7 @@ from common_variables import (
     tlims,
 )
 from matplotlib import pyplot as plt
-from utilities import get_filestring, read_station_data, datapath
+from utilities import get_filestring, read_station_data
 
 # define figure height
 plt.rcParams['figure.figsize'][1]=14*cm
@@ -40,7 +40,7 @@ def make_figure():
         count_cols=1
         for p in params:
             filestr = get_filestring(st, p, tlims[0], tlims[1])
-            data=read_station_data(filestr=datapath+filestr)
+            data=read_station_data(filestr=filestr)
             # unique depth levels of current station
             unique_d=list(set(data.Z_LOCATION))
             unique_d.sort(reverse=True)

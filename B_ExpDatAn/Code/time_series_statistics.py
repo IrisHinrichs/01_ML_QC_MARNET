@@ -8,7 +8,7 @@ import datetime as dt
 import time
 import numpy as np
 import pandas as pd
-from utilities import datapath, read_station_data, get_filestring, diff_time_vec, convert_duration_string
+from utilities import read_station_data, get_filestring, diff_time_vec, convert_duration_string
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
 
@@ -41,8 +41,7 @@ def plot_coverage():
         for p in params:
             counter_p+=1
             filestring = get_filestring(s,p,)
-            file = datapath+filestring
-            data = read_station_data(file)
+            data = read_station_data(filestring)
             
             # fraction of time series len
             ts_frac = data.groupby('Z_LOCATION').count()/max_ts_length*100
@@ -116,12 +115,10 @@ def analyze_gaps():
             savestringtd50= savepath+'Quantiles/' +p+'_td50_'+'_'.join(s.split(' '))+'.csv'
             
             filestring = get_filestring(s,p,)
-            file = datapath+filestring
             print(filestring)
             
             # read data
-            file = datapath+filestring
-            data = read_station_data(file)
+            data = read_station_data(filestring)
             
             # get list of unique depth levels
             unique_d=list(set(data.Z_LOCATION))
