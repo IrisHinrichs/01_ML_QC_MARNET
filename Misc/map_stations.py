@@ -7,6 +7,8 @@ Created on Mon Aug 12 15:01:42 2024
 
 import matplotlib
 import matplotlib.pyplot as plt
+import cartopy.feature as cfeature
+import cartopy.crs as ccrs
 import numpy as np
 import os
 
@@ -15,7 +17,7 @@ import sys
 
 abspath = os.path.abspath("B_ExpDatAn/Code")
 sys.path.insert(0, abspath)
-from common_variables import cm, fs, bbox_inches, layout  # noqa: E402
+from common_variables import cm, fs, bbox_inches, stationsdict, layout  # noqa: E402
 
 def map_stations(
     lat=[54.5981666667, 54.4995, 54.9983333333, 54.6827833333],
@@ -23,12 +25,12 @@ def map_stations(
 ):
     # define everything that has to do with the resulting figure
     plt.rcParams["figure.figsize"][1] = 10 * cm
-    plt.figure(layout=layout)
+    plt.figure()#layout=layout)
     savefigpath = "Misc/map_stations.png"
     dlon = 0.5
     dlat = 1
     cmap = matplotlib.cm.bone
-    cmap.set_bad("gray", 1.0)
+    cmap.set_bad("white", 1.0)
 
     # extent of map
     extent = [min(lon) - dlon, max(lon) + dlon, min(lat) - dlat, max(lat) + dlat]
@@ -55,21 +57,27 @@ def map_stations(
     elev[landmask] = np.nan
 
     # plot elevation
-    axx = plt.axes()
+    axx = plt.axes(projection=ccrs.PlateCarree())
     im = plt.imshow(
         np.flipud(elev), interpolation=None, extent=extent, cmap=cmap, aspect="auto"
     )
 
+    # labels etc-
+    gridlines = axx.gridlines(draw_labels=True)
+    gridlines.xlabels_top=False
+    gridlines.ylabels_right=False
+    axx.set_xlabel("Geographische Länge [°]", fontsize=fs)
+    axx.set_ylabel("Geographische Breite [°]", fontsize=fs)
+    plt.clim(-60, 0)
+
+
     # Add station positions
     plt.plot(lon, lat, "rx")
-    plt.xlabel("Geographische Länge [°]", fontsize=fs)
-    plt.ylabel("Geographische Breite [°]", fontsize=fs)
-    plt.clim(-60, 0)
-    plt.grid()
+
+    # Add coastline    
+    axx.add_feature(cfeature.COASTLINE)
     
     #  colorbar
-    #cax = fig.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height])
-    #cb = plt.colorbar(im, cax=cax, label = "Wassertiefe [m]") 
     cb = plt.colorbar(im, label = "Wassertiefe [m]", shrink=1.0, ax=axx) 
     cb.ax.tick_params(labelsize=fs)
     labels = [str(ll).replace('-', '') for ll in cb.get_ticks()]
