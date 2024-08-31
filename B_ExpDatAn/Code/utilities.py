@@ -12,17 +12,21 @@ from pandas._libs.tslibs import timedeltas
 import matplotlib.pyplot as plt
 from common_variables import  layout, stationsdict, fs, paramdict, cm, bbox_inches
 import matplotlib.dates as mdates
-def get_datapath(cur_path = __file__, parents=2):
-    # construct  absolute path to original data
+def get_path(cur_path = __file__, parents=2, dirname="A_Data"):
+    # construct  absolute path to directory given by
+    # -dirname
+    # which is located 
+    # -parents
+    # levels above __file__
     datapath = os.path.dirname(os.path.abspath(__file__))
     prepath =datapath
     for ll in range(0,parents):
         prepath = Path(prepath).parent.absolute()
     datapath = prepath
-    datapath = prepath / 'A_Data'
+    datapath = prepath / dirname
     return datapath
     
-datapath = get_datapath()
+datapath = get_path()
 
 
 
