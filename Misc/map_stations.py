@@ -17,7 +17,7 @@ import sys
 
 abspath = os.path.abspath("B_ExpDatAn/Code")
 sys.path.insert(0, abspath)
-from common_variables import cm, fs, bbox_inches, stationsdict, layout  # noqa: E402
+from common_variables import cm, fs, bbox_inches  # noqa: E402
 
 def map_stations(
     lat=[54.5981666667, 54.4995, 54.9983333333, 54.6827833333],
