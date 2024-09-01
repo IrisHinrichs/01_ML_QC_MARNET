@@ -18,13 +18,13 @@ def get_path(cur_path = __file__, parents=2, dirname="A_Data"):
     # which is located 
     # -parents
     # levels above __file__
-    datapath = os.path.dirname(os.path.abspath(__file__))
-    prepath =datapath
+    fpath = os.path.dirname(os.path.abspath(__file__))
+    prepath =fpath
     for ll in range(0,parents):
         prepath = Path(prepath).parent.absolute()
-    datapath = prepath
-    datapath = prepath / dirname
-    return datapath
+    
+    dirpath = prepath / dirname
+    return dirpath
     
 datapath = get_path()
 
