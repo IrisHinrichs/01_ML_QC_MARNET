@@ -24,7 +24,7 @@ def get_path(cur_path = __file__, parents=2, dirname="A_Data"):
         prepath = Path(prepath).parent.absolute()
     
     dirpath = prepath / dirname
-    return dirpath
+    return str(dirpath)
     
 datapath = get_path()
 
