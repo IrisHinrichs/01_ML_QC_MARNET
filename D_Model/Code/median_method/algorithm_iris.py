@@ -71,7 +71,7 @@ def run_mm_algorithm(ts):
         scores = execute(config, ts)
     else:
         raise ValueError(f"Unknown execution type '{config.executionType}'; expected 'execute'!")
-    return scores
+    return list(scores)
 # Code for testing
 # import pandas as pd
 # abspath = os.path.abspath("D_Model")
