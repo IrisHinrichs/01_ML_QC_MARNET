@@ -5,6 +5,7 @@ from scipy.signal import lombscargle
 from common_variables import (
     bbox_inches,
     cm,
+    
     fs,
     layout,
     fontdict,
@@ -15,7 +16,7 @@ from common_variables import (
     tlims,
 )
 from matplotlib import pyplot as plt
-from utilities import get_filestring, read_station_data
+from utilities import datapath, get_filestring, read_station_data
 
 import os
 import sys
@@ -72,7 +73,7 @@ def plot_periodograms(res='h'):
                     cmp = mtpl.colormaps['Purples']
                 # read data
                 filestr = get_filestring(st, p, tlims[0], tlims[1])
-                data=read_station_data(filestr=filestr)
+                data=read_station_data(filestr=datapath+filestr)
                 # unique depth levels of current station
                 unique_d=list(set(data.Z_LOCATION))
                 unique_d.sort(reverse=True)
