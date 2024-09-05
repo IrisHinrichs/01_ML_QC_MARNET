@@ -4,16 +4,23 @@ Created on Thu Jul 18 14:33:40 2024
 
 @author: bd2107
 """
-import datetime as dt
-import time
+
 import numpy as np
 import pandas as pd
-from utilities import read_station_data, get_filestring, diff_time_vec, convert_duration_string
+from .utilities import read_station_data, get_filestring, diff_time_vec, convert_duration_string
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
 
-from common_variables import  layout, cm, stations, stationsdict,\
-    params, paramdict, tlims, fs, fontdict, bbox_inches
+from B_ExpDatAn.Code.common_variables import (
+    layout,
+    cm,
+    stations,
+    stationsdict,
+    params,
+    tlims,
+    fs,
+    bbox_inches,
+)
     
 import os
     
@@ -55,7 +62,7 @@ def plot_coverage():
     # get current yticklabel locations
     yticklocs = plt.gca().get_yticks()
     yticklabels = plt.gca().get_yticklabels()
-    yticklabels = [l._text.replace(chr(8722), '') for l in yticklabels]
+    yticklabels = [ll._text.replace(chr(8722), '') for ll in yticklabels]
  
     
     # set xlims, ylims, labels
@@ -110,7 +117,7 @@ def analyze_gaps():
             savestringmints= savepath +p+'_sampling_scheme_'+'_'.join(s.split(' '))+'.csv'
             
             # time delta corresponding t 99.9% of cumulative distribution
-            savestringtd99p9= savepath+'Quantiles/' +p+'_td99.9_'+'_'.join(s.split(' '))+'.csv'
+            # savestringtd99p9= savepath+'Quantiles/' +p+'_td99.9_'+'_'.join(s.split(' '))+'.csv'
             # time delta corresponding t 50% of cumulative distribution
             savestringtd50= savepath+'Quantiles/' +p+'_td50_'+'_'.join(s.split(' '))+'.csv'
             
@@ -342,7 +349,7 @@ def plot_max_time_spans(time_delta=False, frac=False):
         # get current yticklabel locations
         yticklocs = plt.gca().get_yticks()
         yticklabels = plt.gca().get_yticklabels()
-        yticklabels = [l._text.replace(chr(8722), '') for l in yticklabels]
+        yticklabels = [ll._text.replace(chr(8722), '') for ll in yticklabels]
      
         
         # set xlims, ylims, labels
@@ -382,7 +389,7 @@ def plot_max_time_spans(time_delta=False, frac=False):
         # get current yticklabel locations
         yticklocs = plt.gca().get_yticks()
         yticklabels = plt.gca().get_yticklabels()
-        yticklabels = [l._text.replace(chr(8722), '') for l in yticklabels]
+        yticklabels = [ll._text.replace(chr(8722), '') for ll in yticklabels]
      
         
         # set xlims, ylims, labels
@@ -460,7 +467,7 @@ def plot_td(quant='50'):
     # get current yticklabel locations
     yticklocs = plt.gca().get_yticks()
     yticklabels = plt.gca().get_yticklabels()
-    yticklabels = [l._text.replace(chr(8722), '') for l in yticklabels]
+    yticklabels = [ll._text.replace(chr(8722), '') for ll in yticklabels]
  
     
     # set xlims, ylims, labels
