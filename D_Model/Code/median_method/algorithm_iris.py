@@ -6,7 +6,8 @@ import json
 
 import numpy as np
 
-from median_method import MedianMethod
+
+from .median_method import MedianMethod
 
 
 
