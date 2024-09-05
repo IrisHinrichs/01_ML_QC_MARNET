@@ -1,42 +1,17 @@
 # -*- coding: utf-8 -*-
 # Module for anomaly detection
 import os
-import sys
-from pathlib import Path
 import pandas as pd
-ut_path = os.path.join("B_ExpDatAn", "Code") 
-def get_path(cur_path = __file__, parents=2, dirname=ut_path):
-    # construct  absolute path to directory given by
-    # -dirname
-    # which is located 
-    # -parents
-    # levels above __file__
-    fpath = os.path.dirname(os.path.abspath(__file__))
-    prepath =fpath
-    for ll in range(0,parents):
-        prepath = Path(prepath).parent.absolute()
-    
-    if isinstance(prepath,str):
-        dirpath= os.path.join(prepath, dirname)
-    else:
-        dirpath = prepath / dirname
-    return str(dirpath)
 
-# set necessary paths
-abspath = get_path()
-sys.path.insert(0, abspath)
-abspath = get_path(parents=2, dirname=os.path.join("C_DataPreProc","Code"))
-sys.path.insert(0, abspath)
-# abspath = get_path(parents=0, dirname =os.path.join("median_method"))
-# sys.path.insert(0, abspath)
-resultspath = get_path(parents=1, dirname =os.path.join("Results"))
-from utilities import get_filestring, read_station_data
-from pandas import DataFrame as DF
-from common_variables import stations, params, tlims
-from time_series_statistics import find_all_time_spans  # noqa: E402
-from data_preprocessing import piecewise_interpolation
-from median_method.algorithm_iris import run_mm_algorithm
+from B_ExpDatAn.Code.utilities import get_filestring, read_station_data
+from B_ExpDatAn.Code.common_variables import stations, params, tlims
+from B_ExpDatAn.Code.time_series_statistics import find_all_time_spans  # noqa: E402
+from C_DataPreProc.Code.data_preprocessing import piecewise_interpolation
+from D_Model.Code.median_method.algorithm_iris import run_mm_algorithm
 import numpy as np
+
+# where to save results
+resultspath = os.path.join('.', 'Results')
 
 
 def ad_mm(ts):
