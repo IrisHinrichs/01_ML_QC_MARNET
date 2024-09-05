@@ -10,7 +10,14 @@ import pandas as pd
 import datetime as dt
 from pandas._libs.tslibs import timedeltas
 import matplotlib.pyplot as plt
-from common_variables import  layout, stationsdict, fs, paramdict, cm, bbox_inches
+from B_ExpDatAn.Code.common_variables import (
+    layout,
+    stationsdict,
+    fs,
+    paramdict,
+    cm,
+    bbox_inches,
+)
 import matplotlib.dates as mdates
 def get_path(cur_path = __file__, parents=2, dirname="A_Data"):
     # construct  absolute path to directory given by
