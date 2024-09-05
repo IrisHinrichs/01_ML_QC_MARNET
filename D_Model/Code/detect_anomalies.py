@@ -27,15 +27,15 @@ abspath = get_path()
 sys.path.insert(0, abspath)
 abspath = get_path(parents=2, dirname=os.path.join("C_DataPreProc","Code"))
 sys.path.insert(0, abspath)
-abspath = get_path(parents=0, dirname =os.path.join("median_method"))
-sys.path.insert(0, abspath)
+# abspath = get_path(parents=0, dirname =os.path.join("median_method"))
+# sys.path.insert(0, abspath)
 resultspath = get_path(parents=1, dirname =os.path.join("Results"))
 from utilities import get_filestring, read_station_data
 from pandas import DataFrame as DF
 from common_variables import stations, params, tlims
 from time_series_statistics import find_all_time_spans  # noqa: E402
 from data_preprocessing import piecewise_interpolation
-from algorithm_iris import run_mm_algorithm
+from median_method.algorithm_iris import run_mm_algorithm
 import numpy as np
 
 
@@ -84,13 +84,15 @@ def main():
                 scores = ad_mm(ts_interp.DATA_VALUE)
                 ts_interp = ts_interp.assign(ad_mm=scores)
 
-                # STEP III: append single time series pieces to dataframe again
+                # STEP III: Concatenate single time series pieces to dataframe again
                 if 'df_results' not in locals():
                     df_results = pd.DataFrame()
-                df_results = df_results.append(ts_interp, ignoreIndex=True)
-    # Last STEP: Save dataframe with interpolated time series and anomaly score in results
-    dummy = os.path.basename(filestr)
-    filename = dummy.replace(".csv", "_mm.csv")
-    savefile = os.path.join(resultspath,filename)
-    df_results.to_csv(savefile, sep=',')      
+                df_results = pd.concat([df_results,ts_interp])
+            # Last STEP: Save dataframe with interpolated time series and anomaly score in results
+            dummy = os.path.basename(filestr)
+            filename = dummy.replace(".csv", "_mm.csv")
+            savefile = os.path.join(resultspath,filename)
+            df_results = df_results.sort_values(by = ['TIME_VALUE', 'Z_LOCATION'], ascending = [True, True])
+            df_results.to_csv(savefile, sep=',') 
+            del df_results    
 main()
