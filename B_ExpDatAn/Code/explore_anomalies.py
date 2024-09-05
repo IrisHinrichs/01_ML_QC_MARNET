@@ -7,12 +7,12 @@ Created on Mon Jul 29 15:32:37 2024
 import math
 import datetime as dt
 import pandas as pd # version 2.1.4 auf dem Laptop zu Hause, 1.4.4 bei der Arbeit
-from utilities import datapath, read_station_data, get_filestring, diff_time_vec, convert_duration_string
+from B_ExpDatAn.Code.utilities import datapath, read_station_data, get_filestring, diff_time_vec, convert_duration_string
 from matplotlib import pyplot as plt 
 import matplotlib.dates as mdates
 
 
-from common_variables import  layout, cm, stations, stationsdict,\
+from B_ExpDatAn.Code.common_variables import  layout, cm, stations, stationsdict,\
     params, paramdict, tlims, fs, fontdict, bbox_inches
     
 import os

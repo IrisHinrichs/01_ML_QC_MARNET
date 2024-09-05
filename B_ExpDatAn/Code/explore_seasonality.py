@@ -2,7 +2,7 @@
 import matplotlib as mtpl
 import numpy as np
 from scipy.signal import lombscargle
-from common_variables import (
+from B_ExpDatAn.Code.common_variables import (
     bbox_inches,
     cm,
     
@@ -16,7 +16,7 @@ from common_variables import (
     tlims,
 )
 from matplotlib import pyplot as plt
-from utilities import datapath, get_filestring, read_station_data
+from B_ExpDatAn.Code.utilities import datapath, get_filestring, read_station_data
 
 import os
 import sys
