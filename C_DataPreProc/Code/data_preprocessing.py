@@ -3,12 +3,7 @@
 #import datetime as dt
 import pandas as pd
 import numpy as np
-import sys
-import os
-
-abspath = os.path.abspath("B_ExpDatAn/Code")
-sys.path.insert(0, abspath)
-from time_series_statistics import find_all_time_spans  # noqa: E402
+from B_ExpDatAn.Code.time_series_statistics import find_all_time_spans  # noqa: E402
 
 
 def piecewise_interpolation(ts, gap=10):
