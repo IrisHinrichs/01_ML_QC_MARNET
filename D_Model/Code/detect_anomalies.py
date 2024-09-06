@@ -2,13 +2,24 @@
 # Module for anomaly detection
 import os
 import pandas as pd
+import sys
 
-from B_ExpDatAn.Code.utilities import get_filestring, read_station_data
-from B_ExpDatAn.Code.common_variables import stations, params, tlims
+# Add absolute path of directory 
+# 01_ML_QC_MARNET to sys.path
+currentdir=os.path.dirname(__file__)
+pathpieces = os.path.split(currentdir)
+while pathpieces[-1]!='01_ML_QC_MARNET':
+    currentdir= os.path.dirname(currentdir)
+    pathpieces = os.path.split(currentdir)
+sys.path.insert(0,currentdir)
+
+
+from B_ExpDatAn.Code.utilities import get_filestring, read_station_data  # noqa: E402
+from B_ExpDatAn.Code.common_variables import stations, params, tlims  # noqa: E402
 from B_ExpDatAn.Code.time_series_statistics import find_all_time_spans  # noqa: E402
-from C_DataPreProc.Code.data_preprocessing import piecewise_interpolation
-from D_Model.Code.median_method.algorithm_iris import run_mm_algorithm
-import numpy as np
+from C_DataPreProc.Code.data_preprocessing import piecewise_interpolation  # noqa: E402
+from D_Model.Code.median_method.algorithm_iris import run_mm_algorithm  # noqa: E402
+import numpy as np  # noqa: E402
 
 # where to save results
 resultspath = os.path.join('.', 'Results')
