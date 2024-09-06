@@ -3,12 +3,7 @@
 #import datetime as dt
 import pandas as pd
 import numpy as np
-import sys
-import os
-
-abspath = os.path.abspath("B_ExpDatAn/Code")
-sys.path.insert(0, abspath)
-from time_series_statistics import find_all_time_spans  # noqa: E402
+from B_ExpDatAn.Code.time_series_statistics import find_all_time_spans  # noqa: E402
 
 
 def piecewise_interpolation(ts, gap=10):
@@ -45,6 +40,12 @@ def piecewise_interpolation(ts, gap=10):
     # initialize data frame for interpolated values
     ts_interp = pd.DataFrame(columns=ts.columns.to_list()+['TIME_VALUE', 'INTERP'])
 
+    # set data types of single columns
+    convert_dict = dict(ts.dtypes)
+    convert_dict |= {'TIME_VALUE': ts.index.dtype, 'INTERP': 'boolean'}
+    ts_interp = ts_interp.astype(convert_dict)
+
+
     #initialize empty lists for single columns 
     for c in ts.columns:
         exec(c+"=[]")
@@ -70,7 +71,10 @@ def piecewise_interpolation(ts, gap=10):
 
         # Interpolate values for all other columns of data frame
         for c in list(ts.columns):
-            exec(c+"+=list(np.interp(new_p_index, ts.index, ts."+c+"))")
+            coldata = ts[c][:]
+            vals=np.interp(new_p_index, ts.index, coldata)
+            vals = vals.astype(convert_dict[c])
+            exec(c+"+=list(vals)")
         
         # Create information about interpolated values of
         # current piece of time series and concat it to single list

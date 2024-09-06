@@ -6,7 +6,8 @@ import json
 
 import numpy as np
 
-from median_method import MedianMethod
+
+from .median_method import MedianMethod
 
 
 
@@ -71,7 +72,7 @@ def run_mm_algorithm(ts):
         scores = execute(config, ts)
     else:
         raise ValueError(f"Unknown execution type '{config.executionType}'; expected 'execute'!")
-    return scores
+    return list(scores)
 # Code for testing
 # import pandas as pd
 # abspath = os.path.abspath("D_Model")
