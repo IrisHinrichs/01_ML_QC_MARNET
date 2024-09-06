@@ -5,6 +5,8 @@ Created on Thu Jul 18 14:57:32 2024
 @author: bd2107
 """
 import os
+import sys
+import json
 from pathlib import Path
 import pandas as pd
 import datetime as dt
@@ -19,6 +21,16 @@ from B_ExpDatAn.Code.common_variables import (
     bbox_inches,
 )
 import matplotlib.dates as mdates
+
+# Add absolute path of directory 
+# 01_ML_QC_MARNET to sys.path
+currentdir=os.path.dirname(__file__)
+pathpieces = os.path.split(currentdir)
+while pathpieces[-1]!='01_ML_QC_MARNET':
+    currentdir= os.path.dirname(currentdir)
+    pathpieces = os.path.split(currentdir)
+sys.path.insert(0,currentdir)
+
 def get_path(cur_path = __file__, parents=2, dirname="A_Data"):
     # construct  absolute path to directory given by
     # -dirname
@@ -252,7 +264,16 @@ def plot_anomaly_legend():
     plt.axis('off')
     fig.savefig('../Figures(legend_anomalies.png')
 
-    
+def read_json_file(method = 'median_method'):
+     #read json file and append necessary attributes
+    abspath = os.path.join(sys.path[0], 'D_Model', 'Code', method)
+    jsonfile= os.path.join(abspath ,"manifest.json")
+    f = open(jsonfile)
+    jsondict = json.load(f)
+    f.close()
+    jsondict['executionType']='execute'
+    return jsondict
+   
 
 
     
