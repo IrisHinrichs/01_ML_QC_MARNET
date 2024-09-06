@@ -1,15 +1,9 @@
 import argparse
 from dataclasses import dataclass
 from typing import Tuple
-import os
-import json
-
+from B_ExpDatAn.Code.utilities import read_json_file
 import numpy as np
-
-
 from .median_method import MedianMethod
-
-
 
 @dataclass
 class CustomParameters:
@@ -48,17 +42,6 @@ def execute(config, ts):
 
     scores = mm.fit_predict()
     return scores
-
-def read_json_file():
-     #read json file and append necessary attributes
-    abspath = os.path.dirname(os.path.realpath(__file__))
-    jsonfile= os.path.join(abspath ,"manifest.json")
-    f = open(jsonfile)
-    jsondict = json.load(f)
-    f.close()
-    jsondict['executionType']='execute'
-    return jsondict
-
 
 def run_mm_algorithm(ts):
     scores = []
