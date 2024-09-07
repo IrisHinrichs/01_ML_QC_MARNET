@@ -1,10 +1,11 @@
 name: master_thesis
 channels:
+  - pytorch
   - conda-forge
   - nodefaults
-  #- https://repo.anaconda.com/pkgs/main
-  #- https://conda.anaconda.org/conda-forge/
-  #- defaults
+  - https://repo.anaconda.com/pkgs/main
+  - https://conda.anaconda.org/conda-forge/
+  - defaults
   
 dependencies:
   - python=3.9.13
@@ -20,3 +21,10 @@ dependencies:
   - scipy=1.9.1=py39he11b74f_0
   - statsmodels=0.13.2=py39h2bbff1b_0
   - zstandard=0.19.0
+  # requirements for ocean_wnn
+  - scikit-learn=0.24.1
+  - pytorch=2.3.1 # 1.7.1 konnte nicht installiert werden
+  - torchvision=0.18.1
+  - torchaudio=2.3.1 
+  - cpuonly=2.0
+
