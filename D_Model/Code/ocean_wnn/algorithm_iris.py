@@ -2,10 +2,22 @@ import argparse
 from dataclasses import dataclass
 import numpy as np
 import pandas as pd
+import os
+import sys
 
-from B_ExpDatAn.Code.utilities import read_json_file
+# Add absolute path of directory 
+# 01_ML_QC_MARNET to sys.path
+currentdir=os.path.dirname(__file__)
+pathpieces = os.path.split(currentdir)
+while pathpieces[-1]!='01_ML_QC_MARNET':
+    currentdir= os.path.dirname(currentdir)
+    pathpieces = os.path.split(currentdir)
+sys.path.insert(0,currentdir)
 
-from .ocean_wnn.model import WNN
+
+from B_ExpDatAn.Code.utilities import read_json_file  # noqa: E402
+
+from .ocean_wnn.model import WNN  # noqa: E402
 
 
 @dataclass
@@ -29,13 +41,13 @@ class CustomParameters:
 
 
 class AlgorithmArgs(argparse.Namespace):
-    @property
-    def ts(self) -> np.ndarray:
-        return self.df.iloc[:, 1:-1].values
+    # @property
+    # def ts(self) -> np.ndarray:
+    #     return self.df.iloc[:, 1:-1].values
 
-    @property
-    def df(self) -> pd.DataFrame:
-        return pd.read_csv(self.dataInput)
+    # @property
+    # def df(self) -> pd.DataFrame:
+    #     return pd.read_csv(self.dataInput)
 
     @staticmethod
     def from_dict() -> 'AlgorithmArgs':
@@ -47,8 +59,8 @@ class AlgorithmArgs(argparse.Namespace):
         return AlgorithmArgs(**args)
 
 
-def train(args: AlgorithmArgs):
-    data = args.ts
+def train(args: AlgorithmArgs, ts):
+    data = ts
     model = WNN(window_size=args.customParameters.train_window_size,
                 hidden_size=args.customParameters.hidden_size,
                 a=args.customParameters.wavelet_a,
@@ -68,28 +80,43 @@ def train(args: AlgorithmArgs):
     model.save(args.modelOutput)
 
 
-def execute(args: AlgorithmArgs):
-    data = args.ts
+def execute(args: AlgorithmArgs, ts):
+    data = ts
     model = WNN.load(args.modelInput)
     scores, _ = model.detect(data, with_threshold=args.customParameters.with_threshold)
-    scores.tofile(args.dataOutput, sep="\n")
+    #scores.tofile(args.dataOutput, sep="\n")
     return scores
 
 
 def set_random_state(config: AlgorithmArgs) -> None:
     seed = config.customParameters.random_state
-    import random, torch
+    import random
+    import torch
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
 
 
-def run_ownn_algorithm(ts):
+def run_ownn_algorithm(ts, modelOutput, executionType="train"):
     args = AlgorithmArgs.from_dict()
+    args.executionType=executionType
+    args.modelOutput=modelOutput
+    args.modelInput=modelOutput
     set_random_state(args)
+    # check if model for current time series already exists
     if args.executionType == "train":
-        train(args)
+        train(args, ts)
     elif args.executionType == "execute":
-        scores = execute(args)
+        scores = execute(args, ts)
+        return scores
     else:
         raise ValueError(f"No executionType '{args.executionType}' available! Choose either 'train' or 'execute'.")
+
+# Code for testing
+abspath = os.path.abspath("D_Model")
+file = os.path.join(abspath, "test_data","sby_need_full.csv") 
+data = pd.read_csv(file,usecols= ['value'])
+data = data['value'].to_numpy().reshape(-1,1)
+modelOutput=os.path.join(abspath, "test_data","modelOutput")
+run_ownn_algorithm(data, modelOutput=modelOutput, executionType="train")
+test = run_ownn_algorithm(data, modelOutput=modelOutput, executionType="execute")
