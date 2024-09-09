@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import os
 import sys
+from matplotlib import pyplot as plt
 
 # Add absolute path of directory 
 # 01_ML_QC_MARNET to sys.path
@@ -17,7 +18,7 @@ sys.path.insert(0,currentdir)
 
 from B_ExpDatAn.Code.utilities import read_json_file  # noqa: E402
 
-from .ocean_wnn.model import WNN  # noqa: E402
+from ocean_wnn.model import WNN  # noqa: E402
 
 
 @dataclass
@@ -119,4 +120,6 @@ data = pd.read_csv(file,usecols= ['value'])
 data = data['value'].to_numpy().reshape(-1,1)
 modelOutput=os.path.join(abspath, "test_data","modelOutput")
 run_ownn_algorithm(data, modelOutput=modelOutput, executionType="train")
-test = run_ownn_algorithm(data, modelOutput=modelOutput, executionType="execute")
+scores = run_ownn_algorithm(data, modelOutput=modelOutput, executionType="execute")
+index = np.array(range(0, len(data)))
+plt.plot(index[scores>1], data[scores>1],'r.', index[scores<=1], data[scores<=1], 'b+')
