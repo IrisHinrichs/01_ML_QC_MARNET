@@ -18,7 +18,7 @@ sys.path.insert(0,currentdir)
 
 from B_ExpDatAn.Code.utilities import read_json_file  # noqa: E402
 
-from ocean_wnn.model import WNN  # noqa: E402
+from .ocean_wnn.model import WNN  # noqa: E402
 
 
 @dataclass
@@ -114,12 +114,12 @@ def run_ownn_algorithm(ts, modelOutput, executionType="train"):
         raise ValueError(f"No executionType '{args.executionType}' available! Choose either 'train' or 'execute'.")
 
 # Code for testing
-abspath = os.path.abspath("D_Model")
-file = os.path.join(abspath, "test_data","sby_need_full.csv") 
-data = pd.read_csv(file,usecols= ['value'])
-data = data['value'].to_numpy().reshape(-1,1)
-modelOutput=os.path.join(abspath, "test_data","modelOutput")
-run_ownn_algorithm(data, modelOutput=modelOutput, executionType="train")
-scores = run_ownn_algorithm(data, modelOutput=modelOutput, executionType="execute")
-index = np.array(range(0, len(data)))
-plt.plot(index[scores>1], data[scores>1],'r.', index[scores<=1], data[scores<=1], 'b+')
+# abspath = os.path.abspath("D_Model")
+# file = os.path.join(abspath, "test_data","sby_need_full.csv") 
+# data = pd.read_csv(file,usecols= ['value'])
+# data = data['value'].to_numpy().reshape(-1,1)
+# modelOutput=os.path.join(abspath, "test_data","modelOutput")
+# run_ownn_algorithm(data, modelOutput=modelOutput, executionType="train")
+# scores = run_ownn_algorithm(data, modelOutput=modelOutput, executionType="execute")
+# index = np.array(range(0, len(data)))
+# plt.plot(index[scores>1], data[scores>1],'r.', index[scores<=1], data[scores<=1], 'b+')
