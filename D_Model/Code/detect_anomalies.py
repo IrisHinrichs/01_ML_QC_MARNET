@@ -53,14 +53,18 @@ def ad_mm(ts):
                                                     # of time series are handled
     return scores
 
-def ad_ownn(ts,modelOutput, executionType="train"):
+def ad_ownn(ts,modelOutput):
     time_spans = find_all_time_spans(time_vec=ts.index, tdel=10)
+
+    # sort time spans by length, starting with longest
+    time_spans_sort = time_spans.sort_values(ascending=False)
 
     # initialize dataframe and list of scores
     scores = []
 
-    # iterate over all parts of the time series
-    for p in time_spans.index:
+    # iterate over all parts of the time series in descending order of their lengths
+    trained = False
+    for p in time_spans_sort.index:
         # define time stamps for current part of
         # time series
         end = p+time_spans[p]
@@ -71,17 +75,21 @@ def ad_ownn(ts,modelOutput, executionType="train"):
 
         # detect anomalies
         linds = len(inds[0])
+        
+        if not trained: # training should be done with longest time series part
+            modelOutput+=str(start)+'_'+str(end)
+            run_ownn_algorithm(ts.iloc[inds], modelOutput=modelOutput, executionType='train')
+            trained=True
         # current time series might be too short
-        if linds<201: # refine values since it depends on defined neighbourhood for median-method
+        if linds<ownn_custPar.train_window_size: 
             scores+=[np.nan]*linds
         else:
-            scores+=run_ownn_algorithm(ts.iloc[inds], modelOutput=modelOutput, executionType=executionType) # rethink method, rethink how first and last values
+            scores+=run_ownn_algorithm(ts.iloc[inds], modelOutput=modelOutput, executionType='execute') 
                                                     # of time series are handled
     return scores
 
 def main():
     for st in stations:
-        count_cols=1
         for p in params:
             filestr = get_filestring(st, p, tlims[0], tlims[1])
             data=read_station_data(filestr=filestr)
@@ -95,7 +103,20 @@ def main():
                 # STEP II: piecewise anomaly detection, 
                 # several functions can be called
                 # append scores to dataframe
+                # median method
                 scores = ad_mm(ts_interp.DATA_VALUE)
+
+                # ocean_wnn
+                modelOutputDir = os.path.join(currentdir,
+                                              'D_Model'
+                                           'Trained_Models', 
+                                           'Ocean_WNN', 
+                                           st,
+                                           p, 
+                                           str(abs(d))+'m')
+                if not os.path.isdir(modelOutputDir):
+                    os.mkdir(modelOutputDir)
+                scores = ad_ownn(ts_interp.DATA_VALUE, modelOutput=modelOutputDir)
                 ts_interp = ts_interp.assign(ad_mm=scores)
 
                 # STEP III: Concatenate single time series pieces to dataframe again
