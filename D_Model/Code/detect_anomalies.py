@@ -19,6 +19,8 @@ from B_ExpDatAn.Code.common_variables import stations, params, tlims  # noqa: E4
 from B_ExpDatAn.Code.time_series_statistics import find_all_time_spans  # noqa: E402
 from C_DataPreProc.Code.data_preprocessing import piecewise_interpolation  # noqa: E402
 from D_Model.Code.median_method.algorithm_iris import run_mm_algorithm  # noqa: E402
+from D_Model.Code.ocean_wnn.algorithm_iris import run_ownn_algorithm  # noqa: E402
+from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custPar  # noqa: E402
 import numpy as np  # noqa: E402
 
 # where to save results
@@ -47,7 +49,33 @@ def ad_mm(ts):
         if linds<201: # refine values since it depends on defined neighbourhood for median-method
             scores+=[np.nan]*linds
         else:
-            scores+=run_mm_algorithm(ts.iloc[inds]) # rethink method, rethink hour first and last values
+            scores+=run_mm_algorithm(ts.iloc[inds]) # rethink method, rethink how first and last values
+                                                    # of time series are handled
+    return scores
+
+def ad_ownn(ts,modelOutput, executionType="train"):
+    time_spans = find_all_time_spans(time_vec=ts.index, tdel=10)
+
+    # initialize dataframe and list of scores
+    scores = []
+
+    # iterate over all parts of the time series
+    for p in time_spans.index:
+        # define time stamps for current part of
+        # time series
+        end = p+time_spans[p]
+        start=pd.Timestamp(p.year, p.month, p.day, p.hour, 0)
+
+        # get existing time stamps for part of time series
+        inds = np.where(((ts.index >= start)&(ts.index<=end)))
+
+        # detect anomalies
+        linds = len(inds[0])
+        # current time series might be too short
+        if linds<201: # refine values since it depends on defined neighbourhood for median-method
+            scores+=[np.nan]*linds
+        else:
+            scores+=run_ownn_algorithm(ts.iloc[inds], modelOutput=modelOutput, executionType=executionType) # rethink method, rethink how first and last values
                                                     # of time series are handled
     return scores
 
