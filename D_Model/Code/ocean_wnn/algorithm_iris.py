@@ -121,7 +121,12 @@ def run_ownn_algorithm(ts, modelOutput, executionType="train", logfile = ''):
 # data = pd.read_csv(file,usecols= ['value'])
 # data = data['value'].to_numpy().reshape(-1,1)
 # modelOutput=os.path.join(abspath, "test_data","modelOutput")
-# run_ownn_algorithm(data, modelOutput=modelOutput, executionType="train")
-# scores = run_ownn_algorithm(data, modelOutput=modelOutput, executionType="execute")
-# index = np.array(range(0, len(data)))
-# plt.plot(index[scores>1], data[scores>1],'r.', index[scores<=1], data[scores<=1], 'b+')
+# # train data
+# half = int(np.fix(len(data)/2))
+# data_train = data[0:half]
+# # validation data
+# data_val = data[half+1:-1]
+# run_ownn_algorithm(data_train, modelOutput=modelOutput, executionType="train")
+# scores = run_ownn_algorithm(data_val, modelOutput=modelOutput, executionType="execute")
+# index = np.array(range(0, len(data_val)))
+# plt.plot(index[scores>1], data_val[scores>1],'r.', index[scores<=1], data_val[scores<=1], 'b+')
