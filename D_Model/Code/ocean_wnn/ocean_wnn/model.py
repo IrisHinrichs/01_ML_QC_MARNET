@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import torch
 import torch.nn as nn
@@ -66,8 +67,10 @@ class WNN(nn.Module):
     def fit(self, X: np.ndarray, epochs: int, learning_rate: float,
             batch_size: int, test_batch_size: int, split: float,
             early_stopping_delta: float, early_stopping_patience: int, threshold_percentile: float,
-            verbose: bool = True, model_path: os.PathLike = "./model.th") -> 'WNN':
-        logging.basicConfig(level=logging.INFO)
+            verbose: bool = True, model_path: os.PathLike = "./model.th",log_file: str = '' ) -> 'WNN':
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
+        logging.basicConfig(filename=log_file, filemode= 'w', level=logging.INFO, force=True)
         logger = logging.getLogger("WNN")
 
         optimizer = optim.Adam(self.parameters(), lr=learning_rate)
@@ -101,10 +104,12 @@ class WNN(nn.Module):
                     f"Epoch {epoch}: Training Loss {sum(train_losses) / len(train_dl)} \t "
                     f"Validation Loss {sum(losses) / len(valid_dl)}"
                 )
-        self._calculate_residual_error_distribution(valid_dl, threshold_percentile)
+        self._calculate_residual_error_distribution(valid_dl, threshold_percentile, 
+                                                    log_file = log_file)
         return self
 
-    def _calculate_residual_error_distribution(self, dataloader: DataLoader, p_u: float):
+    def _calculate_residual_error_distribution(self, dataloader: DataLoader, p_u: float, 
+                                               log_file: str = ''):
         self.eval()
         losses = []
         for x, y in dataloader:
@@ -116,7 +121,8 @@ class WNN(nn.Module):
         p_d = 1 - p_u
         self.threshold = 0.5 * (abs(self.error_dist.loc + torch.log(torch.tensor(p_u / p_d)) * self.error_dist.scale)
                                 + abs(self.error_dist.loc + torch.log(torch.tensor(p_d / p_u)) * self.error_dist.scale))
-        print("threshold", self.threshold)
+        with open(log_file, 'a') as sys.stdout:
+            print("threshold", self.threshold)
 
     @torch.no_grad()
     def detect(self, X: np.ndarray, with_threshold: bool = True):
