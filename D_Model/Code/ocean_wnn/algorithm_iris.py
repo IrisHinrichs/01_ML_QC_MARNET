@@ -77,7 +77,8 @@ def train(args: AlgorithmArgs, ts):
               early_stopping_delta=args.customParameters.early_stopping_delta,
               early_stopping_patience=args.customParameters.early_stopping_patience,
               threshold_percentile=args.customParameters.threshold_percentile,
-              model_path=args.modelOutput)
+              model_path=args.modelOutput,
+              log_file=args.logFile)
     model.save(args.modelOutput)
 
 
@@ -98,11 +99,12 @@ def set_random_state(config: AlgorithmArgs) -> None:
     torch.manual_seed(seed)
 
 
-def run_ownn_algorithm(ts, modelOutput, executionType="train"):
+def run_ownn_algorithm(ts, modelOutput, executionType="train", logfile = ''):
     args = AlgorithmArgs.from_dict()
     args.executionType=executionType
     args.modelOutput=modelOutput
     args.modelInput=modelOutput
+    args.logFile = logfile
     set_random_state(args)
     # check if model for current time series already exists
     if args.executionType == "train":
