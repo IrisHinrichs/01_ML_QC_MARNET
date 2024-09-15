@@ -130,7 +130,7 @@ class WNN(nn.Module):
         exceeding_points = []
         for i in range(1, len(dataset) + 1):
             x_hat = self.forward(next_window.view(1, -1))
-            loss = F.mse_loss(x_hat, y, reduction="none")
+            loss = F.mse_loss(x_hat[0], y, reduction="none")
             losses.append(loss.view(-1))
             predictions.append(x_hat.item())
             if i < len(dataset):
