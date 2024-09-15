@@ -27,14 +27,14 @@ class CustomParameters:
     hidden_size: int = 100
     batch_size: int = 64
     test_batch_size: int = 256
-    epochs: int = 1
+    epochs: int = 1000# 1
     split: float = 0.8
     early_stopping_delta: float = 0.05
     early_stopping_patience: int = 10
     learning_rate: float = 0.01
     wavelet_a: float = -2.5
     wavelet_k: float = -1.5
-    wavelet_wbf: str = "mexican_hat"  # "mexican_hat", "central_symmetric", "morlet"
+    wavelet_wbf: str = "morlet"  # "mexican_hat", "central_symmetric", "morlet"
     wavelet_cs_C: float = 1.75
     threshold_percentile: float = 0.99
     with_threshold: bool = True
