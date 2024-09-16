@@ -24,7 +24,7 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 import numpy as np  # noqa: E402
 
 # where to save results
-resultspath = os.path.join('.', 'Results')
+resultspath = os.path.join(currentdir,'D_Model', 'Results')
 
 
 def ad_mm(ts):
@@ -105,6 +105,7 @@ def ad_ownn(ts,modelOutput):
     return scores
 
 def main():
+    methods = '_mm_ownn_' # initiate string for used methods
     for st in stations:
         for p in params:
             filestr = get_filestring(st, p, tlims[0], tlims[1])
@@ -123,6 +124,7 @@ def main():
                 # append scores to dataframe
                 # median method
                 scores = ad_mm(ts_interp.DATA_VALUE)
+                
 
                 # ocean_wnn
                 modelOutputDir = os.path.join(currentdir,
@@ -144,7 +146,7 @@ def main():
                 df_results = pd.concat([df_results,ts_interp])
             # Last STEP: Save dataframe with interpolated time series and anomaly score in results
             dummy = os.path.basename(filestr)
-            filename = dummy.replace(".csv", "_mm.csv")
+            filename = dummy.replace(".csv","_"+methods+".csv")
             savefile = os.path.join(resultspath,filename)
             df_results = df_results.sort_values(by = ['TIME_VALUE', 'Z_LOCATION'], ascending = [True, True])
             df_results.to_csv(savefile, sep=',') 
