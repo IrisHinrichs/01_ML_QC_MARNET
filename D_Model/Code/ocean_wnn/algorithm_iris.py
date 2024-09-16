@@ -27,14 +27,18 @@ class CustomParameters:
     hidden_size: int = 100
     batch_size: int = 64
     test_batch_size: int = 256
+<<<<<<< HEAD
     epochs: int = 1000#1
+=======
+    epochs: int = 1000# 1
+>>>>>>> 8164c712b09db40dcfb0ad82fa07d30a9010d1c1
     split: float = 0.8
     early_stopping_delta: float = 0.05
     early_stopping_patience: int = 10
     learning_rate: float = 0.01
     wavelet_a: float = -2.5
     wavelet_k: float = -1.5
-    wavelet_wbf: str = "mexican_hat"  # "mexican_hat", "central_symmetric", "morlet"
+    wavelet_wbf: str = "morlet"  # "mexican_hat", "central_symmetric", "morlet"
     wavelet_cs_C: float = 1.75
     threshold_percentile: float = 0.99
     with_threshold: bool = True
@@ -77,7 +81,8 @@ def train(args: AlgorithmArgs, ts):
               early_stopping_delta=args.customParameters.early_stopping_delta,
               early_stopping_patience=args.customParameters.early_stopping_patience,
               threshold_percentile=args.customParameters.threshold_percentile,
-              model_path=args.modelOutput)
+              model_path=args.modelOutput,
+              log_file=args.logFile)
     model.save(args.modelOutput)
 
 
@@ -98,11 +103,12 @@ def set_random_state(config: AlgorithmArgs) -> None:
     torch.manual_seed(seed)
 
 
-def run_ownn_algorithm(ts, modelOutput, executionType="train"):
+def run_ownn_algorithm(ts, modelOutput, executionType="train", logfile = ''):
     args = AlgorithmArgs.from_dict()
     args.executionType=executionType
     args.modelOutput=modelOutput
     args.modelInput=modelOutput
+    args.logFile = logfile
     set_random_state(args)
     # check if model for current time series already exists
     if args.executionType == "train":
@@ -114,6 +120,7 @@ def run_ownn_algorithm(ts, modelOutput, executionType="train"):
         raise ValueError(f"No executionType '{args.executionType}' available! Choose either 'train' or 'execute'.")
 
 # Code for testing
+<<<<<<< HEAD
 abspath = os.path.abspath("D_Model")
 file = os.path.join(abspath, "test_data","sby_need_full.csv") 
 data = pd.read_csv(file,usecols= ['value'])
@@ -123,3 +130,19 @@ run_ownn_algorithm(data, modelOutput=modelOutput, executionType="train")
 scores = run_ownn_algorithm(data, modelOutput=modelOutput, executionType="execute")
 index = np.array(range(0, len(data)))
 plt.plot(index[scores>1], data[scores>1],'r.', index[scores<=1], data[scores<=1], 'b+')
+=======
+# abspath = os.path.abspath("D_Model")
+# file = os.path.join(abspath, "test_data","sby_need_full.csv") 
+# data = pd.read_csv(file,usecols= ['value'])
+# data = data['value'].to_numpy().reshape(-1,1)
+# modelOutput=os.path.join(abspath, "test_data","modelOutput")
+# # train data
+# half = int(np.fix(len(data)/2))
+# data_train = data[0:half]
+# # validation data
+# data_val = data[half+1:-1]
+# run_ownn_algorithm(data_train, modelOutput=modelOutput, executionType="train")
+# scores = run_ownn_algorithm(data_val, modelOutput=modelOutput, executionType="execute")
+# index = np.array(range(0, len(data_val)))
+# plt.plot(index[scores>1], data_val[scores>1],'r.', index[scores<=1], data_val[scores<=1], 'b+')
+>>>>>>> 8164c712b09db40dcfb0ad82fa07d30a9010d1c1

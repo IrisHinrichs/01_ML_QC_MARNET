@@ -15,7 +15,7 @@ sys.path.insert(0,currentdir)
 
 
 from B_ExpDatAn.Code.utilities import get_filestring, read_station_data  # noqa: E402
-from B_ExpDatAn.Code.common_variables import stations, params, tlims  # noqa: E402
+from B_ExpDatAn.Code.common_variables import stations, params, tlims, stationsdict  # noqa: E402
 from B_ExpDatAn.Code.time_series_statistics import find_all_time_spans  # noqa: E402
 from C_DataPreProc.Code.data_preprocessing import piecewise_interpolation  # noqa: E402
 from D_Model.Code.median_method.algorithm_iris import run_mm_algorithm  # noqa: E402
@@ -38,10 +38,10 @@ def ad_mm(ts):
         # define time stamps for current part of
         # time series
         end = p+time_spans[p]
-        start=pd.Timestamp(p.year, p.month, p.day, p.hour, 0)
+        begin=pd.Timestamp(p.year, p.month, p.day, p.hour, 0)
 
         # get existing time stamps for part of time series
-        inds = np.where(((ts.index >= start)&(ts.index<=end)))
+        inds = np.where(((ts.index >= begin)&(ts.index<=end)))
 
         # detect anomalies
         linds = len(inds[0])
@@ -56,11 +56,12 @@ def ad_mm(ts):
 def ad_ownn(ts,modelOutput):
     time_spans = find_all_time_spans(time_vec=ts.index, tdel=10)
 
-    # sort time spans by length, starting with longest
+    # sort time spans by length, begining with longest
     time_spans_sort = time_spans.sort_values(ascending=False)
 
-    # initialize dataframe and list of scores
-    scores = []
+    # initialize scores as array of nans
+    scores = np.zeros((len(ts)))
+    scores[:]=np.nan
 
     # iterate over all parts of the time series in descending order of their lengths
     trained = False
@@ -68,23 +69,38 @@ def ad_ownn(ts,modelOutput):
         # define time stamps for current part of
         # time series
         end = p+time_spans[p]
-        start=pd.Timestamp(p.year, p.month, p.day, p.hour, 0)
+        begin=pd.Timestamp(p.year, p.month, p.day, p.hour, 0)
 
         # get existing time stamps for part of time series
-        inds = np.where(((ts.index >= start)&(ts.index<=end)))
+        inds = np.where(((ts.index >= begin)&(ts.index<=end)))
 
         # detect anomalies
         linds = len(inds[0])
         
+        good_vals = np.where(ts['QF3']==2) # only use good values for training
+        data = ts.DATA_VALUE
         if not trained: # training should be done with longest time series part
-            modelOutput+=str(start)+'_'+str(end)
-            run_ownn_algorithm(ts.iloc[inds], modelOutput=modelOutput, executionType='train')
+            log_train = os.path.join(modelOutput, 'log_training.txt')
+            modelOutput=os.path.join(modelOutput,
+                                     begin.strftime('%Y%m%d_%H')+
+                                     '_'+end.strftime('%Y%m%d_%H'))
+            
+            data = data.iloc[np.intersect1d(inds,good_vals)].to_numpy().reshape(-1,1)
+            run_ownn_algorithm(
+                data,
+                modelOutput=modelOutput,
+                executionType="train",
+                logfile=log_train,
+            )
             trained=True
+            continue # current part of time series is already used for training
+                     # got to next entry in time_spans_sort
         # current time series might be too short
         if linds<ownn_custPar.train_window_size: 
-            scores+=[np.nan]*linds
+            continue # part of time series is too short
         else:
-            scores+=run_ownn_algorithm(ts.iloc[inds], modelOutput=modelOutput, executionType='execute') 
+            data= ts.iloc[inds[0]].DATA_VALUE.to_numpy().reshape(-1,1)
+            scores[inds]=run_ownn_algorithm(data, modelOutput=modelOutput, executionType='execute') 
                                                     # of time series are handled
     return scores
 
@@ -92,6 +108,8 @@ def main():
     for st in stations:
         for p in params:
             filestr = get_filestring(st, p, tlims[0], tlims[1])
+            # replace following line with something like 
+            # data = read_interp_data(filestr)
             data=read_station_data(filestr=filestr)
             unique_d=list(set(data.Z_LOCATION))
             unique_d.sort(reverse=True)
@@ -108,20 +126,21 @@ def main():
 
                 # ocean_wnn
                 modelOutputDir = os.path.join(currentdir,
-                                              'D_Model'
+                                              'D_Model',
                                            'Trained_Models', 
                                            'Ocean_WNN', 
-                                           st,
+                                           stationsdict[st],
                                            p, 
                                            str(abs(d))+'m')
                 if not os.path.isdir(modelOutputDir):
-                    os.mkdir(modelOutputDir)
-                scores = ad_ownn(ts_interp.DATA_VALUE, modelOutput=modelOutputDir)
-                ts_interp = ts_interp.assign(ad_mm=scores)
+                    os.makedirs(modelOutputDir)
+                scores = ad_ownn(ts_interp, modelOutput=modelOutputDir)
+                ts_interp = ts_interp.assign(ad_ownn=scores)
 
                 # STEP III: Concatenate single time series pieces to dataframe again
                 if 'df_results' not in locals():
                     df_results = pd.DataFrame()
+               
                 df_results = pd.concat([df_results,ts_interp])
             # Last STEP: Save dataframe with interpolated time series and anomaly score in results
             dummy = os.path.basename(filestr)
