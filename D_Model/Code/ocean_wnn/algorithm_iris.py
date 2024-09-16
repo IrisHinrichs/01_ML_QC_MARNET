@@ -27,11 +27,7 @@ class CustomParameters:
     hidden_size: int = 100
     batch_size: int = 64
     test_batch_size: int = 256
-<<<<<<< HEAD
-    epochs: int = 1000#1
-=======
     epochs: int = 1000# 1
->>>>>>> 8164c712b09db40dcfb0ad82fa07d30a9010d1c1
     split: float = 0.8
     early_stopping_delta: float = 0.05
     early_stopping_patience: int = 10
@@ -120,17 +116,6 @@ def run_ownn_algorithm(ts, modelOutput, executionType="train", logfile = ''):
         raise ValueError(f"No executionType '{args.executionType}' available! Choose either 'train' or 'execute'.")
 
 # Code for testing
-<<<<<<< HEAD
-abspath = os.path.abspath("D_Model")
-file = os.path.join(abspath, "test_data","sby_need_full.csv") 
-data = pd.read_csv(file,usecols= ['value'])
-data = data['value'].to_numpy().reshape(-1,1)
-modelOutput=os.path.join(abspath, "test_data","modelOutput")
-run_ownn_algorithm(data, modelOutput=modelOutput, executionType="train")
-scores = run_ownn_algorithm(data, modelOutput=modelOutput, executionType="execute")
-index = np.array(range(0, len(data)))
-plt.plot(index[scores>1], data[scores>1],'r.', index[scores<=1], data[scores<=1], 'b+')
-=======
 # abspath = os.path.abspath("D_Model")
 # file = os.path.join(abspath, "test_data","sby_need_full.csv") 
 # data = pd.read_csv(file,usecols= ['value'])
@@ -145,4 +130,3 @@ plt.plot(index[scores>1], data[scores>1],'r.', index[scores<=1], data[scores<=1]
 # scores = run_ownn_algorithm(data_val, modelOutput=modelOutput, executionType="execute")
 # index = np.array(range(0, len(data_val)))
 # plt.plot(index[scores>1], data_val[scores>1],'r.', index[scores<=1], data_val[scores<=1], 'b+')
->>>>>>> 8164c712b09db40dcfb0ad82fa07d30a9010d1c1
