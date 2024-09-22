@@ -53,55 +53,64 @@ def ad_mm(ts):
                                                     # of time series are handled
     return scores
 
-def ad_ownn(ts,modelOutput):
-    time_spans = find_all_time_spans(time_vec=ts.index, tdel=10)
+def ad_ownn(ts,ts_interp,modelOutput):
+    good_vals = ts[ts['QF3']==2] # only use good values for training based on original times series
+    time_spans = find_all_time_spans(time_vec=good_vals.index, tdel=1)
 
-    # sort time spans by length, begining with longest
+    # # sort time spans by length, begining with longest
     time_spans_sort = time_spans.sort_values(ascending=False)
 
+    # training should be done with longest time series part
+    p = time_spans_sort.index[0]
+    
+    # define time stamps for current part of
+    # time series
+    end = p+time_spans[p]
+    begin=pd.Timestamp(p.year, p.month, p.day, p.hour, 0)
+
+    # get existing time stamps for part of time series
+    inds = np.where(((good_vals.index >= begin)&(good_vals.index<=end)))
+
+    # detect anomalies
+    linds = len(inds[0])
+
+    log_train = os.path.join(modelOutput, 'log_training.txt')
+    modelOutput=os.path.join(modelOutput,
+                                begin.strftime('%Y%m%d_%H')+
+                                '_'+end.strftime('%Y%m%d_%H'))
+    
+    data = good_vals.iloc[inds].to_numpy().reshape(-1,1)
+    run_ownn_algorithm(
+        data,
+        modelOutput=modelOutput,
+        executionType="train",
+        logfile=log_train,
+    )
+
     # initialize scores as array of nans
-    scores = np.zeros((len(ts)))
+    scores = np.zeros((len(ts_interp)))
     scores[:]=np.nan
 
-    # iterate over all parts of the time series in descending order of their lengths
-    trained = False
-    for p in time_spans_sort.index:
+    # iterate over all parts of the interpolated time series
+    time_spans = find_all_time_spans(time_vec=ts_interp.index, tdel=10)
+    for p in time_spans.index:
         # define time stamps for current part of
         # time series
         end = p+time_spans[p]
         begin=pd.Timestamp(p.year, p.month, p.day, p.hour, 0)
 
         # get existing time stamps for part of time series
-        inds = np.where(((ts.index >= begin)&(ts.index<=end)))
+        inds = np.where(((ts_interp.index >= begin)&(ts_interp.index<=end)))
 
         # detect anomalies
         linds = len(inds[0])
         
-        good_vals = np.where(ts['QF3']==2) # only use good values for training
-        data = ts.DATA_VALUE
-        if not trained: # training should be done with longest time series part
-            log_train = os.path.join(modelOutput, 'log_training.txt')
-            modelOutput=os.path.join(modelOutput,
-                                     begin.strftime('%Y%m%d_%H')+
-                                     '_'+end.strftime('%Y%m%d_%H'))
-            
-            data = data.iloc[np.intersect1d(inds,good_vals)].to_numpy().reshape(-1,1)
-            run_ownn_algorithm(
-                data,
-                modelOutput=modelOutput,
-                executionType="train",
-                logfile=log_train,
-            )
-            trained=True
-            continue # current part of time series is already used for training
-                     # got to next entry in time_spans_sort
         # current time series might be too short
         if linds<ownn_custPar.train_window_size: 
             continue # part of time series is too short
         else:
-            data= ts.iloc[inds[0]].DATA_VALUE.to_numpy().reshape(-1,1)
+            data= ts_interp.iloc[inds[0]].DATA_VALUE.to_numpy().reshape(-1,1)
             scores[inds]=run_ownn_algorithm(data, modelOutput=modelOutput, executionType='execute') 
-                                                    # of time series are handled
     return scores
 
 def main():
@@ -122,8 +131,10 @@ def main():
                 # STEP II: piecewise anomaly detection, 
                 # several functions can be called
                 # append scores to dataframe
+                
                 # median method
                 scores = ad_mm(ts_interp.DATA_VALUE)
+                ts_interp = ts_interp.assign(ad_mm=scores)
                 
 
                 # ocean_wnn
@@ -136,7 +147,8 @@ def main():
                                            str(abs(d))+'m')
                 if not os.path.isdir(modelOutputDir):
                     os.makedirs(modelOutputDir)
-                scores = ad_ownn(ts_interp, modelOutput=modelOutputDir)
+                # Input for ocean_wnn is original time series
+                scores = ad_ownn(ts,ts_interp, modelOutput=modelOutputDir)
                 ts_interp = ts_interp.assign(ad_ownn=scores)
 
                 # STEP III: Concatenate single time series pieces to dataframe again
@@ -148,7 +160,7 @@ def main():
             dummy = os.path.basename(filestr)
             filename = dummy.replace(".csv","_"+methods+".csv")
             savefile = os.path.join(resultspath,filename)
-            df_results = df_results.sort_values(by = ['TIME_VALUE', 'Z_LOCATION'], ascending = [True, True])
-            df_results.to_csv(savefile, sep=',') 
+            df_results = df_results.sort_values(by = ['TIME_VALUE', 'Z_LOCATION'], ascending = [True, False])
+            df_results.to_csv(savefile, sep=',', na_rep= "NaN") 
             del df_results    
 main()
