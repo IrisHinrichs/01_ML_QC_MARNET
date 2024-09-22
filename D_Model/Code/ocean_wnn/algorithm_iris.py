@@ -23,7 +23,7 @@ from .ocean_wnn.model import WNN  # noqa: E402
 
 @dataclass
 class CustomParameters:
-    train_window_size: int = 20
+    train_window_size: int = 24
     hidden_size: int = 100
     batch_size: int = 64
     test_batch_size: int = 256
