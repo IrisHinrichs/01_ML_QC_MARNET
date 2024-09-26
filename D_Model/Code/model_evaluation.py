@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import sys
 import datetime as dt
+import  numpy as np
 
 # Add absolute path of directory 
 # 01_ML_QC_MARNET to sys.path
@@ -19,8 +20,10 @@ from B_ExpDatAn.Code.utilities import get_filestring, read_station_data  # noqa:
 from B_ExpDatAn.Code.common_variables import stations, params, tlims, stationsdict  # noqa: E402
 
 # from where to load results
-resultspath = os.path.join(currentdir,'D_Model', 'Results')
 log_file = 'log_training.txt'
+
+# where to save dataframe
+savepath = os.path.join(currentdir,'D_Model', 'Trained_Models', 'Ocean_WNN')
 
 def get_numerics(s)  -> list:
     replace = [
@@ -44,13 +47,14 @@ def get_numerics(s)  -> list:
             pass
     return fvals
 
-def get_len_train(modelOutputDir) -> dt.timedelta:
+def get_len_train(modelOutputDir) -> float:
     for f in os.listdir(modelOutputDir):
         if f!=log_file:
             elem = f.split('_')
             start = dt.datetime.strptime(elem[0]+elem[1], "%Y%m%d%H")
             end = dt.datetime.strptime(elem[2]+elem[3], "%Y%m%d%H")
             len_train = end-start
+            len_train = len_train.days*24+len_train.seconds/3600
     return len_train
 
 def get_fit_res(lgfile) -> dict:
@@ -68,7 +72,8 @@ def get_fit_res(lgfile) -> dict:
     return model_dict
 
 def main():
-    model_fit = pd.DataFrame()
+    model_data = []
+    
     for st in stations:
         for p in params:
             filestr = get_filestring(st, p, tlims[0], tlims[1])
@@ -95,4 +100,26 @@ def main():
 
                 len_train = get_len_train(modelOutputDir)
                 model_dict = get_fit_res(os.path.join(modelOutputDir, log_file))
-main()
+                new_entry = [st, p, depth, len_train]
+                for v in model_dict.values():
+                    new_entry.append(v)
+
+                model_data.append(new_entry)
+    # fill dataframe
+    model_fit = pd.DataFrame(
+        model_data,
+        columns=[
+            "Station",
+            "Parameter",
+            "Depth",
+            "len_train",
+            "n_epochs",
+            "t_loss",
+            "v_loss",
+            "thresh",
+        ],
+    )
+   # save results of model fitting
+    model_fit.to_csv(os.path.join(savepath, 'results_model_fitting.csv'))    
+if __name__=='main':   
+    main()
