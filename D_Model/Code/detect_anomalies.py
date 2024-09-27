@@ -26,6 +26,8 @@ import numpy as np  # noqa: E402
 # where to save results
 resultspath = os.path.join(currentdir,'D_Model', 'Results')
 
+# initiate string for used methods
+methods = '_mm_ownn_' 
 
 def ad_mm(ts):
     time_spans = find_all_time_spans(time_vec=ts.index, tdel=10)
@@ -114,7 +116,6 @@ def ad_ownn(ts,ts_interp,modelOutput):
     return scores
 
 def main():
-    methods = '_mm_ownn_' # initiate string for used methods
     for st in stations:
         for p in params:
             filestr = get_filestring(st, p, tlims[0], tlims[1])
@@ -163,4 +164,5 @@ def main():
             df_results = df_results.sort_values(by = ['TIME_VALUE', 'Z_LOCATION'], ascending = [True, False])
             df_results.to_csv(savefile, sep=',', na_rep= "NaN") 
             del df_results    
-main()
+if __name__ == "__main__":
+    main()
