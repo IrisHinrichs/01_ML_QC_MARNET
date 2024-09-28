@@ -18,7 +18,8 @@ from B_ExpDatAn.Code.utilities import get_filestring, read_station_data  # noqa:
 from B_ExpDatAn.Code.common_variables import stations, params, tlims, stationsdict  # noqa: E402
 from B_ExpDatAn.Code.time_series_statistics import find_all_time_spans  # noqa: E402
 from C_DataPreProc.Code.data_preprocessing import piecewise_interpolation  # noqa: E402
-from D_Model.Code.median_method.algorithm_iris import run_mm_algorithm  # noqa: E402
+from D_Model.Code.median_method.algorithm_iris import run_mm_algorithm, mm_neigh  # noqa: E402
+from D_Model.Code.median_method.algorithm_iris.CustomParameters import mm_neigh  # noqa: E402
 from D_Model.Code.ocean_wnn.algorithm_iris import run_ownn_algorithm  # noqa: E402
 from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custPar  # noqa: E402
 import numpy as np  # noqa: E402
@@ -32,8 +33,9 @@ methods = '_mm_ownn_'
 def ad_mm(ts):
     time_spans = find_all_time_spans(time_vec=ts.index, tdel=10)
 
-    # initialize dataframe and list of scores
-    scores = []
+    # initialize scores as array of nans
+    scores = np.zeros((len(ts)))
+    scores[:]=np.nan
 
     # iterate over all parts of the time series
     for p in time_spans.index:
@@ -48,9 +50,7 @@ def ad_mm(ts):
         # detect anomalies
         linds = len(inds[0])
         # current time series might be too short
-        if linds<201: # refine values since it depends on defined neighbourhood for median-method
-            scores+=[np.nan]*linds
-        else:
+        if linds>=2*mm_neigh+1: # refine values since it depends on defined neighbourhood for median-method
             scores+=run_mm_algorithm(ts.iloc[inds]) # rethink method, rethink how first and last values
                                                     # of time series are handled
     return scores
