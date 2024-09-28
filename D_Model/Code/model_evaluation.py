@@ -151,14 +151,40 @@ def calc_roc_metrics(ts, method):
     y_true = ts.QF3.values
     y_true[y_true==2]=0
     y_true[y_true>2]=1
-    y_true_s = y_true[np.where(np.isnan(y_score)==False)]
-    if all(np.iszero(y_true_s)):
+    y_true_s = y_true[np.where(not np.isnan(y_score))]
+    if all(y_true_s==0): # no bad data in current time_series
         fpr=tpr=threshs=auc=np.nan
         return fpr,tpr,threshs,auc
-    y_score_s = y_score[np.where(np.isnan(y_score)==False)]
+    y_score_s = y_score[np.where(not np.isnan(y_score))]
     auc = roc_auc_score(y_true_s, y_score_s)
     fpr,tpr,threshs = roc_curve(y_true_s, y_score_s)
     return fpr,tpr,threshs, auc
+
+def non_NaN(ts):
+    # choose evaluation data
+    # needs be no-NaN values in both ad_mm- as well as ad_ownn-column
+    # plus optionally data after training phase of Ocean_WNN prediciton model
+    rowind = np.where(~np.isnan(ts['ad_mm']) & ~np.isnan(ts['ad_ownn'])) 
+    ts_eval = ts.iloc[rowind[0]]
+    return ts_eval
+
+def after_training_phase(st, p, depth, ts_eval):
+    # temporal restriction, only data after training phase
+    if os.path.isfile(resultsfile):
+        model_fit = pd.read_csv(resultsfile)
+    else:
+        model_fit = summarize_model_fitting()
+                # find end of training phase for model for  
+                # current station, parameter and depth level
+    train_interval= model_fit.loc[
+                    (model_fit.Station == st)
+                    & (model_fit.Parameter == p)
+                    & (model_fit.Depth == depth),
+                    ['start_train', 'end_train']
+                    ]
+    ts_eval = ts_eval[ts_eval.index>dt.datetime.strptime(str(train_interval.end_train.iloc[0]),'%Y%m%d%H')]
+    return ts_eval
+
 def main():
     '''Plot ROC metrics'''
     
@@ -167,7 +193,8 @@ def main():
             filestr = get_filestring(st, p, tlims[0], tlims[1])
             filestr = filestr.replace('.csv','_'+ methods+'.csv')
             filestr = filestr.replace('A_Data', os.path.join('D_Model', 'Results'))
-            data=pd.read_csv(filestr)
+            data=pd.read_csv(filestr, index_col='TIME_VALUE')
+            data.index = pd.to_datetime(data.index)
             unique_d=list(set(data.Z_LOCATION))
             unique_d.sort(reverse=True)
             legendstrings = []
@@ -179,10 +206,16 @@ def main():
                 figname = str(depth)+'m_ROCmetrics.png'
                 fig = plt.figure(layout=layout)
                 ts = data[data["Z_LOCATION"]==d] # entries corresponding to depth level d
+                # choose evaluation data
+                # needs be no-NaN values in ad_mm- as well as ad_ownn-column
+                # plus optionally data after training phase of Ocean_WNN prediciton model
+                ts_eval = non_NaN(ts)
+                # temporal restriction, only data after training phase
+                ts_eval = after_training_phase(st, p, depth, ts_eval)
                 for m in mthds:
-                    fpr, tpr, threshs,auc = calc_roc_metrics(ts, mthds[m])
-                    if all(np.isnan([fpr, tpr, threshs,auc])):
-                        
+                    fpr, tpr, threshs,auc = calc_roc_metrics(ts_eval, mthds[m])
+                    if all([np.isnan(fpr).all(), np.isnan(tpr).all(), np.isnan(threshs).all()]): # no anomalies in ground truth data
+
                         continue
                     plt.plot(fpr, tpr, '.')
                     legendstrings.append(m+', AUC='+str(round(auc,2)))
@@ -191,13 +224,14 @@ def main():
                 plt.legend(legendstrings)
                 titlestring = stationsdict[st]+', '+\
                     str(depth)+' m,'+\
-                        paramdict[p].replace('[°C]', '')
+                        paramdict[p].replace('[° C]', '').replace('[]', '')
                                     
                 plt.title(titlestring, fontsize=fs)
                 plt.legend(legendstrings)
                 #plt.show()
-                fig.savefig(os.path.join(savefigpath,figname), bbox_inches=bbox_inches)
+                #fig.savefig(os.path.join(savefigpath,figname), bbox_inches=bbox_inches)
                 plt.close(fig) 
 
 if __name__=='__main__':   
+    #test = summarize_model_fitting()
     main()
