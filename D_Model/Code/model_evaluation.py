@@ -38,6 +38,7 @@ log_file = 'log_training.txt'
 
 # where to save dataframe of training results
 savepath = os.path.join(currentdir,'D_Model', 'Trained_Models', 'Ocean_WNN')
+resultsfile = os.path.join(savepath, 'results_model_fitting.csv')
 
 # where to save results from evaluation
 evalpath = os.path.join(currentdir, 'D_Model','Evaluation', 'Figures')
@@ -74,7 +75,7 @@ def get_len_train(modelOutputDir) -> float:
             end = dt.datetime.strptime(elem[2]+elem[3], "%Y%m%d%H")
             len_train = end-start
             len_train = len_train.days*24+len_train.seconds/3600
-    return len_train
+    return start.strftime("%Y%m%d%H"), end.strftime("%Y%m%d%H"), len_train
 
 def get_fit_res(lgfile) -> dict:
     f = open(lgfile, "r")
@@ -90,7 +91,7 @@ def get_fit_res(lgfile) -> dict:
     model_dict={'n_epochs':n_epochs, 't_loss':tloss, 'v_loss':vloss, 'thresh':thresh}
     return model_dict
 
-def summarize_model_fitting():
+def summarize_model_fitting() -> pd.DataFrame:
     '''Summarizes the results of oceanwnn model fitting'''
     model_data = []
     
@@ -118,9 +119,9 @@ def summarize_model_fitting():
                 # threshold value for anomaly detection: thresh_anom
                 # depth as index
 
-                len_train = get_len_train(modelOutputDir)
+                start_train, end_train,len_train = get_len_train(modelOutputDir)
                 model_dict = get_fit_res(os.path.join(modelOutputDir, log_file))
-                new_entry = [st, p, depth, len_train]
+                new_entry = [st, p, depth,start_train, end_train, len_train]
                 for v in model_dict.values():
                     new_entry.append(v)
 
@@ -132,6 +133,8 @@ def summarize_model_fitting():
             "Station",
             "Parameter",
             "Depth",
+            "start_train",
+            "end_train",
             "len_train",
             "n_epochs",
             "t_loss",
@@ -140,7 +143,8 @@ def summarize_model_fitting():
         ],
     )
    # save results of model fitting
-    model_fit.to_csv(os.path.join(savepath, 'results_model_fitting.csv')) 
+    model_fit.to_csv(resultsfile)
+    return model_fit 
 
 def calc_roc_metrics(ts, method):
     y_score = ts[method].values
