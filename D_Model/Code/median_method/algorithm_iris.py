@@ -4,10 +4,10 @@ from typing import Tuple
 from B_ExpDatAn.Code.utilities import read_json_file
 import numpy as np
 from .median_method import MedianMethod
-
+mm_neigh = 24
 @dataclass
 class CustomParameters:
-    neighbourhood_size: int = 100
+    neighbourhood_size: int = mm_neigh
     random_state: int = 42
 
 
