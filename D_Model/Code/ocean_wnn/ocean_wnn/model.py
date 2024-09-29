@@ -129,7 +129,13 @@ class WNN(nn.Module):
     @torch.no_grad()
     def detect(self, X: np.ndarray, with_threshold: bool = True):
         self.eval()
-        X = self.scaler.transform(X)
+        # X = self.scaler.transform(X)
+        
+        # z-Transform based on current input data
+        mean =X.mean()
+        std=X.std()
+        X = (X-mean)/std
+        
         dataset = TimeSeries(X, window_size=self.window_size)
 
         losses = [torch.tensor([np.nan])] * self.window_size
