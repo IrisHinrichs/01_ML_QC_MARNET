@@ -13,6 +13,8 @@ from sklearn.preprocessing import StandardScaler
 from .early_stopping import EarlyStopping
 from .dataset import TimeSeries
 
+import math
+
 
 class WBF(nn.Module):  # Wavelet Basis Function
     def __init__(self, a: float, k: float, mother_wavelet: str = "mexican_hat", C: float = 1.75):
@@ -162,3 +164,33 @@ class WNN(nn.Module):
     def load(path: os.PathLike) -> 'WNN':
         model = torch.load(path)
         return model
+    
+    ### IH ###
+    @torch.no_grad()
+    def predict(self, X: np.ndarray):
+        self.eval()
+        # z-transform with scaler values derived from training data
+        # X = self.scaler.transform(X)
+        # std = math.sqrt(self.scaler.var_)
+        # mean = self.scaler.mean_[0]
+
+        # z-Transform based on current input data
+        mean =X.mean()
+        std=X.std()
+        X = (X-mean)/std
+        dataset = TimeSeries(X, window_size=self.window_size)
+        
+        # initiation with nans 
+        # is necessary to make 
+        # list of pedictions same dimension as input X
+        predictions = [np.nan]*self.window_size
+        
+        next_window, y = dataset[0]
+        for i in range(1, len(dataset) + 1):
+            x_hat = self.forward(next_window.view(1, -1))
+            predictions.append(x_hat.item())
+            if i < len(dataset):
+                next_window, y = dataset[i]
+        # retransform predictions
+        predictions=[(p*std)+mean for p in predictions]
+        return predictions
