@@ -50,7 +50,7 @@ def ad_mm(ts):
         linds = len(inds[0])
         # current time series might be too short
         if linds>=2*mm_neigh+1: # refine values since it depends on defined neighbourhood for median-method
-            scores+=run_mm_algorithm(ts.iloc[inds]) # rethink method, rethink how first and last values
+            scores[inds]=run_mm_algorithm(ts.iloc[inds]) # rethink method, rethink how first and last values
                                                     # of time series are handled
     return scores
 
@@ -80,7 +80,7 @@ def ad_ownn(ts,ts_interp,modelOutput):
                                 begin.strftime('%Y%m%d_%H')+
                                 '_'+end.strftime('%Y%m%d_%H'))
     
-    data = good_vals.iloc[inds].to_numpy().reshape(-1,1)
+    data = good_vals.iloc[inds].DATA_VALUE.to_numpy().reshape(-1,1)
     run_ownn_algorithm(
         data,
         modelOutput=modelOutput,
