@@ -89,6 +89,13 @@ def execute(args: AlgorithmArgs, ts):
     #scores.tofile(args.dataOutput, sep="\n")
     return scores
 
+def predict(args: AlgorithmArgs, ts):
+    data = ts
+    model = WNN.load(args.modelInput)
+    ts_predict = model.predict(data)
+    #scores.tofile(args.dataOutput, sep="\n")
+    return ts_predict
+
 
 def set_random_state(config: AlgorithmArgs) -> None:
     seed = config.customParameters.random_state
@@ -112,6 +119,9 @@ def run_ownn_algorithm(ts, modelOutput, executionType="train", logfile = ''):
     elif args.executionType == "execute":
         scores = execute(args, ts)
         return scores
+    elif args.executionType == 'predict':
+        ts_pred = predict(args, ts)
+        return ts_pred
     else:
         raise ValueError(f"No executionType '{args.executionType}' available! Choose either 'train' or 'execute'.")
 
