@@ -19,7 +19,6 @@ from B_ExpDatAn.Code.common_variables import stations, params, tlims, stationsdi
 from B_ExpDatAn.Code.time_series_statistics import find_all_time_spans  # noqa: E402
 from C_DataPreProc.Code.data_preprocessing import piecewise_interpolation  # noqa: E402
 from D_Model.Code.median_method.algorithm_iris import run_mm_algorithm, mm_neigh  # noqa: E402
-from D_Model.Code.median_method.algorithm_iris.CustomParameters import mm_neigh  # noqa: E402
 from D_Model.Code.ocean_wnn.algorithm_iris import run_ownn_algorithm  # noqa: E402
 from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custPar  # noqa: E402
 import numpy as np  # noqa: E402
