@@ -7,6 +7,7 @@ import datetime as dt
 import  numpy as np
 from sklearn.metrics import roc_curve, roc_auc_score
 from matplotlib import pyplot as plt
+import matplotlib.dates as mdates
 
 # Add absolute path of directory 
 # 01_ML_QC_MARNET to sys.path
@@ -30,8 +31,13 @@ from B_ExpDatAn.Code.common_variables import (  # noqa: E402
     fs,
     fontdict,
     bbox_inches,
-)  
+)
+from B_ExpDatAn.Code.time_series_statistics import find_all_time_spans  # noqa: E402
+from C_DataPreProc.Code.data_preprocessing import piecewise_interpolation  # noqa: E402  
 from D_Model.Code.detect_anomalies import methods  # noqa: E402
+from D_Model.Code.ocean_wnn.algorithm_iris import run_ownn_algorithm  # noqa: E402
+from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custPar  # noqa: E402
+
 
 # from where to load results
 log_file = 'log_training.txt'
@@ -185,8 +191,10 @@ def after_training_phase(st, p, depth, ts_eval):
     ts_eval = ts_eval[ts_eval.index>dt.datetime.strptime(str(train_interval.end_train.iloc[0]),'%Y%m%d%H')]
     return ts_eval
 
-def main():
-    '''Plot ROC metrics'''
+def plot_roc_metrics():
+    '''Plot ROC metrics
+    plots ROC-Curves for all stations, parameters and depth levels
+    presenting results of Ocean_WNN and Median-Method'''
     
     for st in stations:
         for p in params:
@@ -230,8 +238,104 @@ def main():
                 plt.legend(legendstrings)
                 #plt.show()
                 #fig.savefig(os.path.join(savefigpath,figname), bbox_inches=bbox_inches)
-                plt.close(fig) 
+                plt.close(fig)
 
+def main():
+    '''Compare Ocean_WNN-predicitions and actual observations'''
+    model_fit = pd.read_csv(resultsfile)
+    for st in stations:
+        for p in ['SZ']:#params:
+            #define colormap
+            if p == 'WT':
+                col='blue'
+                ylabelstr = '[° C]'
+            else:
+                col='purple'
+                ylabelstr = '[]'
+            filestr = get_filestring(st, p, tlims[0], tlims[1])
+            # replace following line with something like 
+            # data = read_interp_data(filestr)
+            data=read_station_data(filestr=filestr)
+            unique_d=list(set(data.Z_LOCATION))
+            unique_d.sort(reverse=True)
+            for d in unique_d:
+                depth = abs(d)
+                ts = data[data["Z_LOCATION"]==d] # entries corresponding to depth level d
+                # STEP I: piecewise interpolation of all time series
+                ts_interp = piecewise_interpolation(ts, gap=1)
+
+                # find all time spans
+                time_spans = find_all_time_spans(time_vec=ts_interp.index, tdel=1)
+
+                # ocean_wnn
+                modelOutput = os.path.join(currentdir,
+                                              'D_Model',
+                                           'Trained_Models', 
+                                           'Ocean_WNN', 
+                                           stationsdict[st],
+                                           p, 
+                                           str(abs(d))+'m')
+                train_interval= model_fit.loc[
+                    (model_fit.Station == st)
+                    & (model_fit.Parameter == p)
+                    & (model_fit.Depth == depth),
+                    ['start_train', 'end_train']
+                    ]
+                begin = str(train_interval.start_train.values[0])
+                end = str(train_interval.end_train.values[0])
+                begin = begin[0:8]+'_'+begin[8:11]
+                end = end[0:8]+'_'+end[8:11]
+                modelOutput=os.path.join(modelOutput,
+                                begin+
+                                '_'+end)
+            
+                # iterate over all parts of the interpolated time series
+                time_spans = find_all_time_spans(time_vec=ts_interp.index, tdel=1)
+                for tp in time_spans.index:
+                    # define time stamps for current part of
+                    # time series
+                    end = tp+time_spans[tp]
+                    begin=pd.Timestamp(tp.year, tp.month, tp.day, tp.hour, 0)
+
+                    # get existing time stamps for part of time series
+                    inds = np.where(((ts_interp.index >= begin)&(ts_interp.index<=end)))
+                    linds = len(inds[0])
+
+                    dat= ts_interp.iloc[inds[0]].DATA_VALUE.to_numpy().reshape(-1,1) 
+                    if linds<ownn_custPar.train_window_size: 
+                        ts_predict = [np.nan]*linds
+                    else:
+                        # Prediction with Ocean_WNN model
+                        ts_predict = run_ownn_algorithm(
+                            dat,
+                            modelOutput=modelOutput,
+                            executionType="predict"
+                        )
+
+                    # visualize observed values of current time span together with
+                    # predicted values
+                    # plot time series
+                    time_vec = pd.date_range(start=begin, end=end, freq= 'h')
+                    fig = plt.figure()
+                    plt.plot(time_vec, ts_predict, 'go',alpha=0.2, markersize=3, linewidth=2)
+                    plt.plot(time_vec, dat, '.',color = col, markersize=3, linewidth=2)
+                    plt.grid()
+                    pstring = paramdict[p].replace('[° C]', '').replace('[]', '')
+                    titlestring = stationsdict[st]+', '+pstring+', '+\
+                                    begin.strftime('%d.%m.%Y %H:%M:%S')+'-'+end.strftime('%d.%m.%Y %H:%M:%S')
+                    plt.title(titlestring, fontsize=fs, wrap=True)
+                    plt.ylabel(ylabelstr)
+                    plt.annotate(str(abs(d))+' m', xy=(0.05, 0.05), xycoords='axes fraction')
+                    
+                    plt.gca().xaxis.set_major_formatter(
+                    mdates.ConciseDateFormatter(plt.gca().xaxis.get_major_locator()))
+
+                    plt.xlim(begin, end)
+                    
+                    plt.show()
+                    #fig.savefig(savefigpath+figname, bbox_inches=bbox_inches)
+                    plt.close(fig)
+                
 if __name__=='__main__':   
     #test = summarize_model_fitting()
     main()
