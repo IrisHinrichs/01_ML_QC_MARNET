@@ -134,7 +134,10 @@ class WNN(nn.Module):
         # z-Transform based on current input data
         mean =X.mean()
         std=X.std()
-        X = (X-mean)/std
+        if std==0:
+            X = X-mean
+        else:
+            X = (X-mean)/std
         
         dataset = TimeSeries(X, window_size=self.window_size)
 
@@ -183,7 +186,11 @@ class WNN(nn.Module):
         # z-Transform based on current input data
         mean =X.mean()
         std=X.std()
-        X = (X-mean)/std
+        if std==0:
+            X = X-mean
+        else:
+            X = (X-mean)/std
+            
         dataset = TimeSeries(X, window_size=self.window_size)
         
         # initiation with nans 
