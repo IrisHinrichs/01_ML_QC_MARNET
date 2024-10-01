@@ -206,7 +206,7 @@ def plot_roc_metrics():
             unique_d=list(set(data.Z_LOCATION))
             unique_d.sort(reverse=True)
             legendstrings = []
-            savefigpath = os.path.join(evalpath, stationsdict[st].replace(" ", "_"), p)
+            savefigpath = os.path.join(evalpath, 'ROC_metrics', stationsdict[st].replace(" ", "_"), p)
             if not os.path.isdir(savefigpath):
                     os.makedirs(savefigpath) 
             for d in unique_d:
@@ -242,9 +242,13 @@ def plot_roc_metrics():
 
 def main():
     '''Compare Ocean_WNN-predicitions and actual observations'''
+    # define figure height
+    plt.rcParams['figure.figsize'][0]=16.5*cm
+    plt.rcParams['figure.figsize'][1]=6*cm
     model_fit = pd.read_csv(resultsfile)
     for st in stations:
-        for p in ['SZ']:#params:
+        for p in params:
+           
             #define colormap
             if p == 'WT':
                 col='blue'
@@ -260,13 +264,18 @@ def main():
             unique_d.sort(reverse=True)
             for d in unique_d:
                 depth = abs(d)
+                # define path to save figures
+                savefigpath = os.path.join(evalpath, 'Predictions', stationsdict[st].replace(" ", "_"), p+'_'+str(depth))
+                if not os.path.isdir(savefigpath):
+                        os.makedirs(savefigpath) 
+
                 ts = data[data["Z_LOCATION"]==d] # entries corresponding to depth level d
                 # STEP I: piecewise interpolation of all time series
                 ts_interp = piecewise_interpolation(ts, gap=1)
 
-                # find all time spans
+                # find all time spans longer than train window size
                 time_spans = find_all_time_spans(time_vec=ts_interp.index, tdel=1)
-
+            
                 # ocean_wnn
                 modelOutput = os.path.join(currentdir,
                                               'D_Model',
@@ -289,8 +298,7 @@ def main():
                                 begin+
                                 '_'+end)
             
-                # iterate over all parts of the interpolated time series
-                time_spans = find_all_time_spans(time_vec=ts_interp.index, tdel=1)
+
                 for tp in time_spans.index:
                     # define time stamps for current part of
                     # time series
@@ -301,40 +309,46 @@ def main():
                     inds = np.where(((ts_interp.index >= begin)&(ts_interp.index<=end)))
                     linds = len(inds[0])
 
-                    dat= ts_interp.iloc[inds[0]].DATA_VALUE.to_numpy().reshape(-1,1) 
-                    if linds<ownn_custPar.train_window_size: 
-                        ts_predict = [np.nan]*linds
+                    if linds<=ownn_custPar.train_window_size: 
+                        continue
                     else:
+                        dat= ts_interp.iloc[inds[0]].DATA_VALUE.to_numpy().reshape(-1,1) 
                         # Prediction with Ocean_WNN model
                         ts_predict = run_ownn_algorithm(
                             dat,
                             modelOutput=modelOutput,
                             executionType="predict"
+                        )  
+                        time_vec = pd.date_range(start=begin, end=end, freq= 'h')
+                        fig = plt.figure()
+                        figname = (
+                            str(depth)
+                            + "m_Predictions_"
+                            + begin.strftime("%Y-%m-%d_%H-%M-%S")
+                            + "__"
+                            + end.strftime("%Y-%m-%d_%H-%M-%S")
+                            + ".png"
                         )
+                        plt.plot(time_vec, ts_predict, 'go',alpha=0.2, markersize=3, linewidth=2)
+                        plt.plot(time_vec, dat, '.',color = col, markersize=3, linewidth=2)
+                        plt.grid()
+                        pstring = paramdict[p].replace('[° C]', '').replace('[]', '')
+                        titlestring = stationsdict[st]+', '+pstring+', '+\
+                                        begin.strftime('%d.%m.%Y %H:%M:%S')+'-'+end.strftime('%d.%m.%Y %H:%M:%S')
+                        plt.title(titlestring, fontsize=fs, wrap=True)
+                        plt.ylabel(ylabelstr)
+                        plt.annotate(str(abs(d))+' m', xy=(0.05, 0.05), xycoords='axes fraction')
+                        
+                        plt.gca().xaxis.set_major_formatter(
+                        mdates.ConciseDateFormatter(plt.gca().xaxis.get_major_locator()))
 
-                    # visualize observed values of current time span together with
-                    # predicted values
-                    # plot time series
-                    time_vec = pd.date_range(start=begin, end=end, freq= 'h')
-                    fig = plt.figure()
-                    plt.plot(time_vec, ts_predict, 'go',alpha=0.2, markersize=3, linewidth=2)
-                    plt.plot(time_vec, dat, '.',color = col, markersize=3, linewidth=2)
-                    plt.grid()
-                    pstring = paramdict[p].replace('[° C]', '').replace('[]', '')
-                    titlestring = stationsdict[st]+', '+pstring+', '+\
-                                    begin.strftime('%d.%m.%Y %H:%M:%S')+'-'+end.strftime('%d.%m.%Y %H:%M:%S')
-                    plt.title(titlestring, fontsize=fs, wrap=True)
-                    plt.ylabel(ylabelstr)
-                    plt.annotate(str(abs(d))+' m', xy=(0.05, 0.05), xycoords='axes fraction')
-                    
-                    plt.gca().xaxis.set_major_formatter(
-                    mdates.ConciseDateFormatter(plt.gca().xaxis.get_major_locator()))
+                        plt.xlim(begin, end)
 
-                    plt.xlim(begin, end)
-                    
-                    plt.show()
-                    #fig.savefig(savefigpath+figname, bbox_inches=bbox_inches)
-                    plt.close(fig)
+                        plt.legend(['Vorhersage', 'Beobachtung'])
+                        
+                        #plt.show()
+                        fig.savefig(os.path.join(savefigpath,figname), bbox_inches=bbox_inches)
+                        plt.close(fig)
                 
 if __name__=='__main__':   
     #test = summarize_model_fitting()
