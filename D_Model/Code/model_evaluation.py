@@ -157,11 +157,11 @@ def calc_roc_metrics(ts, method):
     y_true = ts.QF3.values
     y_true[y_true==2]=0
     y_true[y_true>2]=1
-    y_true_s = y_true[np.where(not np.isnan(y_score))]
+    y_true_s = y_true[np.where(np.isnan(y_score)==False)]
     if all(y_true_s==0): # no bad data in current time_series
         fpr=tpr=threshs=auc=np.nan
         return fpr,tpr,threshs,auc
-    y_score_s = y_score[np.where(not np.isnan(y_score))]
+    y_score_s = y_score[np.where(np.isnan(y_score)==False)]
     auc = roc_auc_score(y_true_s, y_score_s)
     fpr,tpr,threshs = roc_curve(y_true_s, y_score_s)
     return fpr,tpr,threshs, auc
@@ -195,7 +195,9 @@ def plot_roc_metrics():
     '''Plot ROC metrics
     plots ROC-Curves for all stations, parameters and depth levels
     presenting results of Ocean_WNN and Median-Method'''
-    
+    # define figure height
+    plt.rcParams['figure.figsize'][0]=9.0*cm
+    plt.rcParams['figure.figsize'][1]=9.0*cm
     for st in stations:
         for p in params:
             filestr = get_filestring(st, p, tlims[0], tlims[1])
@@ -205,11 +207,11 @@ def plot_roc_metrics():
             data.index = pd.to_datetime(data.index)
             unique_d=list(set(data.Z_LOCATION))
             unique_d.sort(reverse=True)
-            legendstrings = []
             savefigpath = os.path.join(evalpath, 'ROC_metrics', stationsdict[st].replace(" ", "_"), p)
             if not os.path.isdir(savefigpath):
                     os.makedirs(savefigpath) 
             for d in unique_d:
+                legendstrings = []
                 depth = abs(d)
                 figname = str(depth)+'m_ROCmetrics.png'
                 fig = plt.figure(layout=layout)
@@ -219,7 +221,7 @@ def plot_roc_metrics():
                 # plus optionally data after training phase of Ocean_WNN prediciton model
                 ts_eval = non_NaN(ts)
                 # temporal restriction, only data after training phase
-                ts_eval = after_training_phase(st, p, depth, ts_eval)
+                # ts_eval = after_training_phase(st, p, depth, ts_eval)
                 for m in mthds:
                     fpr, tpr, threshs,auc = calc_roc_metrics(ts_eval, mthds[m])
                     if all([np.isnan(fpr).all(), np.isnan(tpr).all(), np.isnan(threshs).all()]): # no anomalies in ground truth data
@@ -236,8 +238,9 @@ def plot_roc_metrics():
                                     
                 plt.title(titlestring, fontsize=fs)
                 plt.legend(legendstrings)
+                plt.grid()
                 #plt.show()
-                #fig.savefig(os.path.join(savefigpath,figname), bbox_inches=bbox_inches)
+                fig.savefig(os.path.join(savefigpath,figname), bbox_inches=bbox_inches)
                 plt.close(fig)
 
 def main():
@@ -332,7 +335,7 @@ def main():
                         plt.plot(time_vec, ts_predict, 'go',alpha=0.2, markersize=3, linewidth=2)
                         plt.plot(time_vec, dat, '.',color = col, markersize=3, linewidth=2)
                         plt.grid()
-                        pstring = paramdict[p].replace('[° C]', '').replace('[]', '')
+                        pstring = paramdict[p].replace(' [° C]', '').replace('[]', '')
                         titlestring = stationsdict[st]+', '+pstring+', '+\
                                         begin.strftime('%d.%m.%Y %H:%M:%S')+'-'+end.strftime('%d.%m.%Y %H:%M:%S')
                         plt.title(titlestring, fontsize=fs, wrap=True)
@@ -352,4 +355,5 @@ def main():
                 
 if __name__=='__main__':   
     #test = summarize_model_fitting()
-    main()
+    #main()
+    plot_roc_metrics()
