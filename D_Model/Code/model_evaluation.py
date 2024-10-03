@@ -274,10 +274,10 @@ def main():
 
                 ts = data[data["Z_LOCATION"]==d] # entries corresponding to depth level d
                 # STEP I: piecewise interpolation of all time series
-                ts_interp = piecewise_interpolation(ts, gap=1)
+                ts_interp = piecewise_interpolation(ts, gap=10)
 
-                # find all time spans longer than train window size
-                time_spans = find_all_time_spans(time_vec=ts_interp.index, tdel=1)
+                # find all time spans
+                time_spans = find_all_time_spans(time_vec=ts_interp.index, tdel=10)
             
                 # ocean_wnn
                 modelOutput = os.path.join(currentdir,
