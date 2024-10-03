@@ -116,8 +116,6 @@ def ad_ownn(ts,ts_interp,modelOutput):
 
 def main():
     for st in stations:
-        if st !='North Sea Buoy III':
-            continue
         for p in params:
             filestr = get_filestring(st, p, tlims[0], tlims[1])
             # replace following line with something like 
