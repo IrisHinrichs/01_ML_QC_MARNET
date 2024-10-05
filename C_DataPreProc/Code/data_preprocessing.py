@@ -97,6 +97,10 @@ def differencing(ts: pd.Series, n: int) -> np.array:
     '''n-times Differencing of time series in order to make time series stationary''' 
     for i in range(0,n):
         ts = np.diff(ts)
+    if isinstance(ts, pd.Series):
+        ts=ts.to_numpy().reshape(-1,1)
+    else:
+        ts = ts.reshape(-1,1)
     return ts
 
 def reverse_diff(first_value: np.array, diff_ts: np.array) -> pd.Series:
