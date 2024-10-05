@@ -33,7 +33,7 @@ from B_ExpDatAn.Code.common_variables import (  # noqa: E402
     bbox_inches,
 )
 from B_ExpDatAn.Code.time_series_statistics import find_all_time_spans  # noqa: E402
-from C_DataPreProc.Code.data_preprocessing import piecewise_interpolation  # noqa: E402  
+from C_DataPreProc.Code.data_preprocessing import piecewise_interpolation, differencing, reverse_diff  # noqa: E402  
 from D_Model.Code.detect_anomalies import methods  # noqa: E402
 from D_Model.Code.ocean_wnn.algorithm_iris import run_ownn_algorithm  # noqa: E402
 from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custPar  # noqa: E402
@@ -42,8 +42,16 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 # from where to load results
 log_file = 'log_training.txt'
 
+# differencing parameter
+ddiff = 2
 # where to save dataframe of training results
-savepath = os.path.join(currentdir,'D_Model', 'Trained_Models', 'Ocean_WNN')
+savepath = os.path.join(
+    currentdir,
+    "D_Model",
+    "Trained_Models",
+    "Ocean_WNN",
+    "Diff_"+str(ddiff)
+)
 resultsfile = os.path.join(savepath, 'results_model_fitting.csv')
 
 # where to save results from evaluation
@@ -110,10 +118,7 @@ def summarize_model_fitting() -> pd.DataFrame:
             for d in unique_d:
                 depth = abs(d)
                 # directory of trained models
-                modelOutputDir = os.path.join(currentdir,
-                                              'D_Model',
-                                           'Trained_Models', 
-                                           'Ocean_WNN', 
+                modelOutputDir = os.path.join(savepath,
                                            stationsdict[st],
                                            p, 
                                            str(depth)+'m')
@@ -276,7 +281,13 @@ def predictions_observations():
             for d in unique_d:
                 depth = abs(d)
                 # define path to save figures
-                savefigpath = os.path.join(evalpath, 'Predictions', stationsdict[st].replace(" ", "_"), p+'_'+str(depth))
+                savefigpath = os.path.join(
+                    evalpath,
+                    "Diff_" + str(ddiff),
+                    "Predictions",
+                    stationsdict[st].replace(" ", "_"),
+                    p + "_" + str(depth),
+                )
                 if not os.path.isdir(savefigpath):
                         os.makedirs(savefigpath) 
 
@@ -288,10 +299,7 @@ def predictions_observations():
                 time_spans = find_all_time_spans(time_vec=ts_interp.index, tdel=10)
             
                 # ocean_wnn
-                modelOutput = os.path.join(currentdir,
-                                              'D_Model',
-                                           'Trained_Models', 
-                                           'Ocean_WNN', 
+                modelOutput = os.path.join(savepath,
                                            stationsdict[st],
                                            p, 
                                            str(abs(d))+'m')
@@ -320,16 +328,21 @@ def predictions_observations():
                     inds = np.where(((ts_interp.index >= begin)&(ts_interp.index<=end)))
                     linds = len(inds[0])
 
-                    if linds<=ownn_custPar.train_window_size: 
+                    if linds<=ownn_custPar.train_window_size+ddiff: 
                         continue
                     else:
-                        dat= ts_interp.iloc[inds[0]].DATA_VALUE.to_numpy().reshape(-1,1) 
+                        dat = differencing(ts_interp.iloc[inds[0]].DATA_VALUE, ddiff)
                         # Prediction with Ocean_WNN model
                         ts_predict = run_ownn_algorithm(
                             dat,
                             modelOutput=modelOutput,
                             executionType="predict"
-                        )  
+                        ) 
+                        # reverse differencing
+                        # startpoints
+                        startind =ownn_custPar.train_window_size
+                        endind = ownn_custPar.train_window_size+ddiff 
+                        dat = reverse_differencing(dat[startind:endind], ts_predict)
                         time_vec = pd.date_range(start=begin, end=end, freq= 'h')
                         fig = plt.figure()
                         figname = (
@@ -360,8 +373,87 @@ def predictions_observations():
                         #plt.show()
                         fig.savefig(os.path.join(savefigpath,figname), bbox_inches=bbox_inches)
                         plt.close(fig)
+# def model_validation():
+#     ''' validate the model by comparing observations
+#     and predictions on the next time span of good data'''
+#     # define cross validation parameters
+    
+#     for st in stations:
+#         for p in params:
+#             filestr = get_filestring(st, p, tlims[0], tlims[1])
+#             # replace following line with something like 
+#             # data = read_interp_data(filestr)
+#             data=read_station_data(filestr=filestr)
+#             unique_d=list(set(data.Z_LOCATION))
+#             unique_d.sort(reverse=True)
+#             for d in unique_d:
+#                 # ocean_wnn, validation
+#                 # define and create directory if necessary
+#                 modelOutputDir = os.path.join(currentdir,
+#                                               'D_Model',
+#                                            'Evaluation',
+#                                            'Validation_PredictionModel' 
+#                                            'Ocean_WNN', 
+#                                            stationsdict[st],
+#                                            p, 
+#                                            str(abs(d))+'m')
+#                 if not os.path.isdir(modelOutputDir):
+#                     os.makedirs(modelOutputDir)
                 
+                
+#                 ts = data[data["Z_LOCATION"]==d] # entries corresponding to depth level d
+                
+#                 good_vals = ts[ts['QF3']==2] # only use good values for training based on original times series
+#                 time_spans = find_all_time_spans(time_vec=good_vals.index, tdel=1)
+
+#                 # # sort time spans by length, begining with longest
+#                 time_spans_sort = time_spans.sort_values(ascending=False)
+
+#                 # training should be done with longest time series part
+#                 pp = time_spans_sort.index[0]
+                
+#                 # define time stamps for current part of
+#                 # time series
+#                 end = p+time_spans[pp]
+#                 begin=pd.Timestamp(pp.year, pp.month, pp.day, pp.hour, 0)
+
+#                 # get existing time stamps for part of time series
+#                 inds = np.where(((good_vals.index >= begin)&(good_vals.index<=end)))
+
+#                 modelOutput = os.path.join(currentdir,
+#                                                 'D_Model',
+#                                             'Trained_Models', 
+#                                             'Ocean_WNN', 
+#                                             stationsdict[st],
+#                                             p, 
+#                                             str(abs(d))+'m')
+#                 train_interval= model_fit.loc[
+#                     (model_fit.Station == st)
+#                     & (model_fit.Parameter == p)
+#                     & (model_fit.Depth == depth),
+#                     ['start_train', 'end_train']
+#                     ]
+#                 begin = str(train_interval.start_train.values[0])
+#                 end = str(train_interval.end_train.values[0])
+#                 begin = begin[0:8]+'_'+begin[8:11]
+#                 end = end[0:8]+'_'+end[8:11]
+#                 modelOutput=os.path.join(modelOutput,
+#                                 begin+
+#                                 '_'+end)
+                
+
+#                 # split data into train and test data
+
+
+#                 run_ownn_algorithm(
+#                     data,
+#                     modelOutput=modelOutput,
+#                     executionType="train",
+#                     logfile=log_train,
+#                 )
+                            
 if __name__=='__main__':   
-    #test = summarize_model_fitting()
+    summarize_model_fitting()
+    #predictions_observations()
+    #plot_roc_metrics()
     #main()
-    plot_roc_metrics()
