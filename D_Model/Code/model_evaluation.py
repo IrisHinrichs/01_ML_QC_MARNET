@@ -243,7 +243,15 @@ def plot_roc_metrics():
                 fig.savefig(os.path.join(savefigpath,figname), bbox_inches=bbox_inches)
                 plt.close(fig)
 
-def main():
+def reverse_differencing(startpoints: np.array, ts_predict: np.array)->np.array:
+    if len(startpoints)==2:
+        first_value = np.diff(startpoints, axis=0)
+        ts_predict = reverse_diff(first_value, ts_predict)
+    first_value = startpoints[0]
+    ts_predict = reverse_diff(first_value, ts_predict)
+    return ts_predict
+
+def predictions_observations():
     '''Compare Ocean_WNN-predicitions and actual observations'''
     # define figure height
     plt.rcParams['figure.figsize'][0]=16.5*cm
