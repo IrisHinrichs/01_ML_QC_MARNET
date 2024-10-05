@@ -17,7 +17,7 @@ sys.path.insert(0,currentdir)
 from B_ExpDatAn.Code.utilities import get_filestring, read_station_data  # noqa: E402
 from B_ExpDatAn.Code.common_variables import stations, params, tlims, stationsdict  # noqa: E402
 from B_ExpDatAn.Code.time_series_statistics import find_all_time_spans  # noqa: E402
-from C_DataPreProc.Code.data_preprocessing import piecewise_interpolation  # noqa: E402
+from C_DataPreProc.Code.data_preprocessing import piecewise_interpolation, differencing, rev_diff  # noqa: E402
 from D_Model.Code.median_method.algorithm_iris import run_mm_algorithm, mm_neigh  # noqa: E402
 from D_Model.Code.ocean_wnn.algorithm_iris import run_ownn_algorithm  # noqa: E402
 from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custPar  # noqa: E402
@@ -54,7 +54,7 @@ def ad_mm(ts):
                                                     # of time series are handled
     return scores
 
-def ad_ownn(ts,ts_interp,modelOutput):
+def ad_ownn(ts,ts_interp,modelOutput, ddiff=0):
     good_vals = ts[ts['QF3']==2] # only use good values for training based on original times series
     time_spans = find_all_time_spans(time_vec=good_vals.index, tdel=1)
 
@@ -80,7 +80,7 @@ def ad_ownn(ts,ts_interp,modelOutput):
                                 begin.strftime('%Y%m%d_%H')+
                                 '_'+end.strftime('%Y%m%d_%H'))
     
-    data = good_vals.iloc[inds].DATA_VALUE.to_numpy().reshape(-1,1)
+    data = differencing(good_vals.iloc[inds].DATA_VALUE.to_numpy().reshape(-1,1), ddiff)
     run_ownn_algorithm(
         data,
         modelOutput=modelOutput,
@@ -107,14 +107,16 @@ def ad_ownn(ts,ts_interp,modelOutput):
         linds = len(inds[0])
         
         # current time series might be too short
-        if linds<ownn_custPar.train_window_size: 
+        if linds<ownn_custPar.train_window_size+ddiff: 
             continue # part of time series is too short
         else:
-            data= ts_interp.iloc[inds[0]].DATA_VALUE.to_numpy().reshape(-1,1)
-            scores[inds]=run_ownn_algorithm(data, modelOutput=modelOutput, executionType='execute') 
+            data = differencing(good_vals.iloc[inds].DATA_VALUE.to_numpy().reshape(-1,1), ddiff)
+            scores[inds[ddiff:-1]]=run_ownn_algorithm(data, modelOutput=modelOutput, executionType='execute')             
     return scores
 
 def main():
+    # differencing parameter
+    ddiff = 2
     for st in stations:
         for p in params:
             filestr = get_filestring(st, p, tlims[0], tlims[1])
@@ -141,14 +143,15 @@ def main():
                 modelOutputDir = os.path.join(currentdir,
                                               'D_Model',
                                            'Trained_Models', 
-                                           'Ocean_WNN', 
+                                           'Ocean_WNN',
+                                           'Diff_'+str(ddiff), 
                                            stationsdict[st],
                                            p, 
                                            str(abs(d))+'m')
                 if not os.path.isdir(modelOutputDir):
                     os.makedirs(modelOutputDir)
                 # Input for ocean_wnn is original time series
-                scores = ad_ownn(ts,ts_interp, modelOutput=modelOutputDir)
+                scores = ad_ownn(ts,ts_interp, modelOutput=modelOutputDir, ddiff=ddiff)
                 ts_interp = ts_interp.assign(ad_ownn=scores)
 
                 # STEP III: Concatenate single time series pieces to dataframe again
