@@ -17,7 +17,7 @@ sys.path.insert(0,currentdir)
 from B_ExpDatAn.Code.utilities import get_filestring, read_station_data  # noqa: E402
 from B_ExpDatAn.Code.common_variables import stations, params, tlims, stationsdict  # noqa: E402
 from B_ExpDatAn.Code.time_series_statistics import find_all_time_spans  # noqa: E402
-from C_DataPreProc.Code.data_preprocessing import piecewise_interpolation, differencing, rev_diff  # noqa: E402
+from C_DataPreProc.Code.data_preprocessing import piecewise_interpolation, differencing # noqa: E402
 from D_Model.Code.median_method.algorithm_iris import run_mm_algorithm, mm_neigh  # noqa: E402
 from D_Model.Code.ocean_wnn.algorithm_iris import run_ownn_algorithm  # noqa: E402
 from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custPar  # noqa: E402
@@ -80,7 +80,7 @@ def ad_ownn(ts,ts_interp,modelOutput, ddiff=0):
                                 begin.strftime('%Y%m%d_%H')+
                                 '_'+end.strftime('%Y%m%d_%H'))
     
-    data = differencing(good_vals.iloc[inds].DATA_VALUE.to_numpy().reshape(-1,1), ddiff)
+    data = differencing(good_vals.iloc[inds].DATA_VALUE, ddiff)
     run_ownn_algorithm(
         data,
         modelOutput=modelOutput,
@@ -110,8 +110,8 @@ def ad_ownn(ts,ts_interp,modelOutput, ddiff=0):
         if linds<ownn_custPar.train_window_size+ddiff: 
             continue # part of time series is too short
         else:
-            data = differencing(good_vals.iloc[inds].DATA_VALUE.to_numpy().reshape(-1,1), ddiff)
-            scores[inds[ddiff:-1]]=run_ownn_algorithm(data, modelOutput=modelOutput, executionType='execute')             
+            data = differencing(ts_interp.iloc[inds].DATA_VALUE, ddiff)
+            scores[inds[0][ddiff::]]=run_ownn_algorithm(data, modelOutput=modelOutput, executionType='execute')             
     return scores
 
 def main():
