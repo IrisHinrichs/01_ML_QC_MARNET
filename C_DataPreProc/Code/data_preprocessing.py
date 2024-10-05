@@ -92,3 +92,15 @@ def piecewise_interpolation(ts, gap=10):
     for c in ts_interp.columns:
         exec("ts_interp."+c+"="+c)
     return ts_interp
+ 
+def differencing(ts: pd.Series, n: int) -> np.array:
+    '''n-times Differencing of time series in order to make time series stationary''' 
+    for i in range(0,n):
+        ts = np.diff(ts)
+    return ts
+
+def reverse_diff(first_value: np.array, diff_ts: np.array) -> pd.Series:
+    '''Reverse differencing of time series'''
+    rev_diffts=np.cumsum(np.append(first_value,diff_ts))
+    return rev_diffts
+
