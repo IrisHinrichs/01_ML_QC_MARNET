@@ -207,7 +207,7 @@ def plot_roc_metrics():
         for p in params:
             filestr = get_filestring(st, p, tlims[0], tlims[1])
             filestr = filestr.replace('.csv','_'+ methods+'.csv')
-            filestr = filestr.replace('A_Data', os.path.join('D_Model', 'Results'))
+            filestr = filestr.replace('A_Data', os.path.join('D_Model', 'Results', 'Diff_'+str(ddiff)))
             data=pd.read_csv(filestr, index_col='TIME_VALUE')
             data.index = pd.to_datetime(data.index)
             unique_d=list(set(data.Z_LOCATION))
