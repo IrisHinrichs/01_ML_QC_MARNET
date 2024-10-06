@@ -24,10 +24,12 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 import numpy as np  # noqa: E402
 
 # differencing parameter
-ddiff = 0
+ddiff = 2
 
 # where to save results
 resultspath = os.path.join(currentdir, "D_Model", "Results", "Diff_" + str(ddiff))
+if not os.path.isdir(resultspath):
+    os.makedirs(resultspath) 
 
 # initiate string for used methods
 methods = '_mm_ownn_' 
