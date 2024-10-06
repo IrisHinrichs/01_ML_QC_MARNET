@@ -330,6 +330,7 @@ def predictions_observations():
                     if linds<=ownn_custPar.train_window_size+ddiff: 
                         continue
                     else:
+                        # difference time series ddiff times
                         dat = differencing(ts_interp.iloc[inds[0]].DATA_VALUE, ddiff)
                         # Prediction with Ocean_WNN model
                         ts_predict = run_ownn_algorithm(
@@ -452,6 +453,6 @@ def predictions_observations():
                             
 if __name__=='__main__':   
     #summarize_model_fitting()
-    #predictions_observations()
-    plot_roc_metrics()
+    predictions_observations()
+    #plot_roc_metrics()
     #main()
