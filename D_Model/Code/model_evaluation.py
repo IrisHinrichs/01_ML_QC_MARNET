@@ -337,14 +337,9 @@ def predictions_observations():
                             modelOutput=modelOutput,
                             executionType="predict"
                         ) 
-                        # reverse differencing
-                        # startpoints
-                        startind =ownn_custPar.train_window_size
-                        endind = ownn_custPar.train_window_size+ddiff 
-                        startpoints =ts_interp.iloc[inds[0][startind:endind]].DATA_VALUE 
-                        dat = reverse_differencing(startpoints, ts_predict[ownn_custPar.train_window_size::])
-                        ts_predict = np.append([np.nan]*ownn_custPar.train_window_size, dat)
-                        dat = ts_interp.iloc[inds[0]].DATA_VALUE
+                        
+                        ts_predict = np.append([np.nan]*ddiff, ts_predict)
+                        dat = np.append([np.nan]*ddiff, dat)
                         
                         time_vec = pd.date_range(start=begin, end=end, freq= 'h')
                         fig = plt.figure()
