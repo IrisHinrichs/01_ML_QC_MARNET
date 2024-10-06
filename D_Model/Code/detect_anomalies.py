@@ -23,8 +23,11 @@ from D_Model.Code.ocean_wnn.algorithm_iris import run_ownn_algorithm  # noqa: E4
 from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custPar  # noqa: E402
 import numpy as np  # noqa: E402
 
+# differencing parameter
+ddiff = 0
+
 # where to save results
-resultspath = os.path.join(currentdir,'D_Model', 'Results')
+resultspath = os.path.join(currentdir, "D_Model", "Results", "Diff_" + str(ddiff))
 
 # initiate string for used methods
 methods = '_mm_ownn_' 
@@ -54,7 +57,7 @@ def ad_mm(ts):
                                                     # of time series are handled
     return scores
 
-def ad_ownn(ts,ts_interp,modelOutput, ddiff=0):
+def ad_ownn(ts,ts_interp,modelOutput, ddiff=ddiff):
     good_vals = ts[ts['QF3']==2] # only use good values for training based on original times series
     time_spans = find_all_time_spans(time_vec=good_vals.index, tdel=1)
 
