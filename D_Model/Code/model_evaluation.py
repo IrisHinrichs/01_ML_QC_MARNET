@@ -55,7 +55,7 @@ savepath = os.path.join(
 resultsfile = os.path.join(savepath, 'results_model_fitting.csv')
 
 # where to save results from evaluation
-evalpath = os.path.join(currentdir, 'D_Model','Evaluation', 'Figures')
+evalpath = os.path.join(currentdir, 'D_Model','Evaluation', 'Figures', "Diff_"+str(ddiff))
 
 mthds = {'Median-Methode': 'ad_mm', 'Ocean_WNN': 'ad_ownn'}
 
@@ -283,7 +283,6 @@ def predictions_observations():
                 # define path to save figures
                 savefigpath = os.path.join(
                     evalpath,
-                    "Diff_" + str(ddiff),
                     "Predictions",
                     stationsdict[st].replace(" ", "_"),
                     p + "_" + str(depth),
@@ -457,7 +456,7 @@ def predictions_observations():
 #                 )
                             
 if __name__=='__main__':   
-    summarize_model_fitting()
+    #summarize_model_fitting()
     #predictions_observations()
-    #plot_roc_metrics()
+    plot_roc_metrics()
     #main()
