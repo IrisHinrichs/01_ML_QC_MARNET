@@ -352,10 +352,11 @@ def predictions_observations():
                             + end.strftime("%Y-%m-%d_%H-%M-%S")
                             + ".png"
                         )
-                        plt.plot(time_vec, ts_predict, 'go',alpha=0.2, markersize=3, linewidth=2)
+                        
                         plt.plot(time_vec, dat, '.',color = col, markersize=3, linewidth=2)
+                        plt.plot(time_vec, ts_predict, 'go',alpha=0.2, markersize=3, linewidth=2)
                         plt.grid()
-                        pstring = paramdict[p].replace(' [° C]', '').replace('[]', '')
+                        pstring = paramdict[p].replace(' [° C]', '').replace(' []', '')
                         titlestring = stationsdict[st]+', '+pstring+', '+\
                                         begin.strftime('%d.%m.%Y %H:%M:%S')+'-'+end.strftime('%d.%m.%Y %H:%M:%S')
                         plt.title(titlestring, fontsize=fs, wrap=True)
@@ -367,7 +368,7 @@ def predictions_observations():
 
                         plt.xlim(begin, end)
 
-                        plt.legend(['Vorhersage', 'Beobachtung'])
+                        plt.legend(['Beobachtung','Vorhersage'])
                         
                         #plt.show()
                         fig.savefig(os.path.join(savefigpath,figname), bbox_inches=bbox_inches)
