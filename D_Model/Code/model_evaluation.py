@@ -9,6 +9,7 @@ from sklearn.metrics import roc_curve, roc_auc_score
 from matplotlib import pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.legend_handler import HandlerTuple
+from sktime.performance_metrics.forecasting import mean_absolute_scaled_error as mase
 
 # Add absolute path of directory 
 # 01_ML_QC_MARNET to sys.path
