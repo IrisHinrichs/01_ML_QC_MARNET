@@ -43,7 +43,8 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 log_file = 'log_training.txt'
 
 # differencing parameter
-ddiff = 2
+ddiff = 0
+
 # where to save dataframe of training results
 savepath = os.path.join(
     currentdir,
@@ -59,6 +60,13 @@ evalpath = os.path.join(currentdir, 'D_Model','Evaluation', 'Figures', "Diff_"+s
 
 mthds = {'Median-Methode': 'ad_mm', 'Ocean_WNN': 'ad_ownn'}
 
+def optimal_thresh(tpr: np.array, fpr: np.array, threshs: np.array) -> tuple:
+    '''Find optimal threshold for classifier based on both hit
+    and false alarm rate and the derived Younden's J Index'''
+    YJ_index = tpr-fpr
+    index = np.argmax(YJ_index)
+    opt_thresh = threshs[index]
+    return opt_thresh, index
 def get_numerics(s)  -> list:
     replace = [
         "tensor(",
@@ -201,8 +209,8 @@ def plot_roc_metrics():
     plots ROC-Curves for all stations, parameters and depth levels
     presenting results of Ocean_WNN and Median-Method'''
     # define figure height
-    plt.rcParams['figure.figsize'][0]=9.0*cm
-    plt.rcParams['figure.figsize'][1]=9.0*cm
+    plt.rcParams['figure.figsize'][0]=8*cm
+    plt.rcParams['figure.figsize'][1]=8*cm
     for st in stations:
         for p in params:
             filestr = get_filestring(st, p, tlims[0], tlims[1])
@@ -217,6 +225,7 @@ def plot_roc_metrics():
                     os.makedirs(savefigpath) 
             for d in unique_d:
                 legendstrings = []
+                legendhandles = []
                 depth = abs(d)
                 figname = str(depth)+'m_ROCmetrics.png'
                 fig = plt.figure(layout=layout)
@@ -230,25 +239,33 @@ def plot_roc_metrics():
                 for m in mthds:
                     fpr, tpr, threshs,auc = calc_roc_metrics(ts_eval, mthds[m])
                     if all([np.isnan(fpr).all(), np.isnan(tpr).all(), np.isnan(threshs).all()]): # no anomalies in ground truth data
-
                         continue
-                    plt.plot(fpr, tpr, '.')
+                    opt_thresh, index = optimal_thresh(tpr, fpr, threshs)
+                    l2, = plt.plot(fpr[index], tpr[index], 'ko',alpha=0.2, markersize=7, linewidth=2)
+                    #l2.set_label('optimal thresh')
+                    l1,  = plt.plot(fpr, tpr, '.')
+                    #l1.set_label(m+', AUC='+str(round(auc,2)))
+                    legendhandles.append(l1)
                     legendstrings.append(m+', AUC='+str(round(auc,2)))
+                legendhandles.append(l2)    
+                legendstrings.append('optimaler Schwellwert')
                 plt.xlabel('FPR')
                 plt.ylabel('TPR')
-                plt.legend(legendstrings)
+                plt.legend(legendhandles, legendstrings)
                 titlestring = stationsdict[st]+', '+\
                     str(depth)+' m,'+\
                         paramdict[p].replace('[° C]', '').replace('[]', '')
                                     
                 plt.title(titlestring, fontsize=fs)
-                plt.legend(legendstrings)
+                #plt.legend()
                 plt.grid()
                 #plt.show()
                 fig.savefig(os.path.join(savefigpath,figname), bbox_inches=bbox_inches)
                 plt.close(fig)
 
 def reverse_differencing(startpoints: np.array, ts_predict: np.array)->np.array:
+    ''' Does not really make sense because deviations between predictions and observations
+    sum up to considerable divergences of time series'''
     if len(startpoints)==2:
         first_value = np.diff(startpoints, axis=0)
         ts_predict = reverse_diff(first_value, ts_predict)
@@ -454,6 +471,6 @@ def predictions_observations():
                             
 if __name__=='__main__':   
     #summarize_model_fitting()
-    predictions_observations()
-    #plot_roc_metrics()
+    #predictions_observations()
+    plot_roc_metrics()
     #main()
