@@ -24,7 +24,7 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 import numpy as np  # noqa: E402
 
 # differencing parameter
-ddiff = 2
+ddiff = 0
 
 # where to save results
 resultspath = os.path.join(currentdir, "D_Model", "Results", "Diff_" + str(ddiff))
@@ -121,7 +121,6 @@ def ad_ownn(ts,ts_interp,modelOutput, ddiff=ddiff):
 
 def main():
     # differencing parameter
-    ddiff = 2
     for st in stations:
         for p in params:
             filestr = get_filestring(st, p, tlims[0], tlims[1])
