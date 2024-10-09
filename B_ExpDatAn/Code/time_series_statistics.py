@@ -4,10 +4,34 @@ Created on Thu Jul 18 14:33:40 2024
 
 @author: bd2107
 """
-
 import numpy as np
 import pandas as pd
-from .utilities import read_station_data, get_filestring, diff_time_vec, convert_duration_string
+import os
+import sys
+# Add absolute path of directory 
+# 01_ML_QC_MARNET to sys.path
+currentdir=os.path.dirname(__file__)
+pathpieces = os.path.split(currentdir)
+while pathpieces[-1]!='01_ML_QC_MARNET':
+    currentdir= os.path.dirname(currentdir)
+    pathpieces = os.path.split(currentdir)
+sys.path.insert(0,currentdir)
+
+
+from B_ExpDatAn.Code.utilities import get_filestring, read_station_data, diff_time_vec, convert_duration_string  # noqa: E402
+from B_ExpDatAn.Code.common_variables import (  # noqa: E402
+    stations,
+    params,
+    tlims,
+    stationsdict,
+    paramdict,
+    layout,
+    cm,
+    fs,
+    fontdict,
+    bbox_inches,
+)
+
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
 
@@ -544,10 +568,9 @@ def find_all_time_spans(time_vec, tdel):
         tspans[old_end_gap]=tspan
         old_end_gap = end_gap 
     return tspans
-               
-#plot_coverage()
-#analyze_gaps()
-#plot_max_time_spans(time_delta=False, frac=False)
-#plot_td()
 
-
+if __name__=="__main__":
+    plot_coverage()
+    #analyze_gaps()
+    #plot_max_time_spans(time_delta=False, frac=False)
+    #plot_td()
