@@ -45,7 +45,7 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 log_file = 'log_training.txt'
 
 # differencing parameter
-ddiff = 0
+ddiff = 2
 
 # where to save dataframe of training results
 savepath = os.path.join(
@@ -544,7 +544,7 @@ def plot_auc_roc_summary():
                     fig.savefig(savefigstr, bbox_inches=bbox_inches)        
                            
 if __name__=='__main__':   
-    #summarize_model_fitting()
+    summarize_model_fitting()
     #predictions_observations()
-    plot_roc_metrics()
+    #plot_roc_metrics()
     #main()
