@@ -476,75 +476,74 @@ def plot_auc_roc_summary():
     time series, both methods (oceanwnn and median) and 
     differencing of time series'''
     # variables related to figure
-    plt.rcParams['figure.figsize'][1]=10*cm
-    fig = plt.figure(layout=layout)
+    plt.rcParams['figure.figsize'][1]=7*cm
+    
     savefigpath = os.path.join(evalpath, 'ROC_metrics')
     marker = [['1','v','P','s'], ['2', '^','*',  'D']]
     msize=7
     fillst= 'full'
     colors = ['blue', 'purple']
     
-    counter_s = -1
-    all_axes = []
-
-    for s in stations:
-        station_axes = []
-        counter_s+=1
-        counter_p = -1
-        for p in params:
-            counter_p+=1
-            filestring = get_filestring(s,p,tlims[0], tlims[1])
-            filestr = filestring.replace('.csv','_'+ methods+'.csv')
-            filestr = filestr.replace('A_Data', os.path.join('D_Model', 'Results', 'Diff_'+str(ddiff)))
-            data=pd.read_csv(filestr, index_col='TIME_VALUE')
-            data.index = pd.to_datetime(data.index)
-            unique_d=list(set(data.Z_LOCATION))
-            unique_d.sort(reverse=True)
-            for d in unique_d:
-                ts = data[data["Z_LOCATION"]==d] # entries corresponding to depth level d
-                # choose evaluation data
-                # needs be no-NaN values in ad_mm- as well as ad_ownn-column
-                # plus optionally data after training phase of Ocean_WNN prediciton model
-                ts_eval = non_NaN(ts)
-            
-                # Area under ROC Curve
-                for m in mthds:
-                    if m=='Median-Methode' and ddiff!=0:
-                        continue # median method was not applied on differenced time series
+    for m in mthds:
+        fig = plt.figure(layout=layout)
+        counter_s = -1
+        all_axes = []
+        if m=='Median-Methode' and ddiff!=0:
+            continue # median method was not applied on differenced time series
+        for s in stations:
+            station_axes = []
+            counter_s+=1
+            counter_p = -1
+            for p in params:
+                counter_p+=1
+                filestring = get_filestring(s,p,tlims[0], tlims[1])
+                filestr = filestring.replace('.csv','_'+ methods+'.csv')
+                filestr = filestr.replace('A_Data', os.path.join('D_Model', 'Results', 'Diff_'+str(ddiff)))
+                data=pd.read_csv(filestr, index_col='TIME_VALUE')
+                data.index = pd.to_datetime(data.index)
+                unique_d=list(set(data.Z_LOCATION))
+                unique_d.sort(reverse=True)
+                for d in unique_d:
+                    ts = data[data["Z_LOCATION"]==d] # entries corresponding to depth level d
+                    # choose evaluation data
+                    # needs be no-NaN values in ad_mm- as well as ad_ownn-column
+                    # plus optionally data after training phase of Ocean_WNN prediciton model
+                    ts_eval = non_NaN(ts)
+                
+                    # Area under ROC Curve
                     _, _, _,auc = calc_roc_metrics(ts_eval, mthds[m])
-                    ax = plt.plot(auc, d ,marker[counter_p][counter_s], markersize=msize,
+                    l1 = plt.plot(auc, d ,marker[counter_p][counter_s], markersize=msize,
                         fillstyle=fillst, color=colors[counter_p])
-                    station_axes.append(ax[0])
-                    all_axes.append(tuple(station_axes))
-                    plt.title(m+', ROC-AUC', fontsize=fs)
-                
-                    # get current yticklabel locations
-                    yticklocs = plt.gca().get_yticks()
-                    yticklabels = plt.gca().get_yticklabels()
-                    yticklabels = [ll._text.replace(chr(8722), '') for ll in yticklabels]
-                
+                station_axes.append(l1[0])
+            all_axes.append(tuple(station_axes))
                     
-                    # set xlims, ylims, labels
-                    plt.ylim((-39,1))
-                    plt.ylabel('Wassertiefe [m]')
-                    plt.xlabel('Fläche unter ROC-Kurve')
-                    plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
-
-                    plt.grid()
-                    plt.show()
-                    
-                    if ddiff==2: # legend is only needed once
-                        plt.legend(all_axes,list(stationsdict.values()),
-                                handler_map={tuple: HandlerTuple(ndivide=None)})
-                    
-                    # customize axes labels etc.
-                    plt.yticks(fontsize= fs)
-                    plt.xticks(fontsize=fs)
-                    savefigstr = os.path.join(savefigpath,m+'_ROC_AUC_summary.png')
-                    fig.savefig(savefigstr, bbox_inches=bbox_inches)        
+        plt.title(m+', ROC-AUC', fontsize=fs)            
+        # get current yticklabel locations
+        yticklocs = plt.gca().get_yticks()
+        yticklabels = plt.gca().get_yticklabels()
+        yticklabels = [ll._text.replace(chr(8722), '') for ll in yticklabels]
+    
+        
+        # set xlims, ylims, labels
+        plt.ylim((-39,1))
+        plt.ylabel('Wassertiefe [m]')
+        plt.xlabel('Fläche unter ROC-Kurve')
+        plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
+        plt.grid()
+        
+        if ddiff==2: # legend is only needed once
+            plt.legend(all_axes,list(stationsdict.values()),
+                    handler_map={tuple: HandlerTuple(ndivide=None)})
+        
+        # customize axes labels etc.
+        plt.yticks(fontsize= fs)
+        plt.xticks(fontsize=fs)
+        savefigstr = os.path.join(savefigpath,m+'_ROC_AUC_summary.png')
+        fig.savefig(savefigstr, bbox_inches=bbox_inches)        
                            
 if __name__=='__main__':   
-    summarize_model_fitting()
+    #summarize_model_fitting()
     #predictions_observations()
-    #plot_roc_metrics()
+    # plot_roc_metrics()
+    plot_auc_roc_summary()
     #main()
