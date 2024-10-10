@@ -122,6 +122,8 @@ def ad_ownn(ts,ts_interp,modelOutput, ddiff=ddiff):
 def main():
     # differencing parameter
     for st in stations:
+        if stationsdict[st] != "Nordsee III":
+            continue
         for p in params:
             filestr = get_filestring(st, p, tlims[0], tlims[1])
             # replace following line with something like 
