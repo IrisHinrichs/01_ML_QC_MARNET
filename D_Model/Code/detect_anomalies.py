@@ -3,6 +3,7 @@
 import os
 import pandas as pd
 import sys
+import platform
 
 # Add absolute path of directory 
 # 01_ML_QC_MARNET to sys.path
@@ -24,9 +25,14 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 import numpy as np  # noqa: E402
 
 # differencing parameter
-ddiff = 0
+ddiff = 2
 
 # where to save results
+if platform.uname().node=="VC21094": # Platform is BSH-VC
+    currentdir = os.path.dirname(currentdir) # set currentdir to parent directory of git-repository
+                                            # all model training and detection of anomalie
+                                            # on BSH-VC is stored outside repository
+
 resultspath = os.path.join(currentdir, "D_Model", "Results", "Diff_" + str(ddiff))
 if not os.path.isdir(resultspath):
     os.makedirs(resultspath) 
