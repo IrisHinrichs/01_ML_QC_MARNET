@@ -45,7 +45,7 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 log_file = 'log_training.txt'
 
 # differencing parameter
-ddiff = 2
+ddiff = 0
 
 # where to save dataframe of training results
 savepath = os.path.join(
@@ -476,26 +476,31 @@ def plot_auc_roc_summary():
     time series, both methods (oceanwnn and median) and 
     differencing of time series'''
     # variables related to figure
-    plt.rcParams['figure.figsize'][1]=7*cm
+    plt.rcParams['figure.figsize'][1]=5*cm
     
     savefigpath = os.path.join(evalpath, 'ROC_metrics')
     marker = [['1','v','P','s'], ['2', '^','*',  'D']]
     msize=7
     fillst= 'full'
     colors = ['blue', 'purple']
+    titlestub=''
+    if ddiff ==2:
+        titlestub=', zweifache Differenzenbildung'    
     
     for m in mthds:
         fig = plt.figure(layout=layout)
-        counter_s = -1
+        counter_p = -1
         all_axes = []
         if m=='Median-Methode' and ddiff!=0:
             continue # median method was not applied on differenced time series
-        for s in stations:
+        
+        for p in params:
+            all_p_aucs = []
+            counter_p+=1
+            counter_s = -1
             station_axes = []
-            counter_s+=1
-            counter_p = -1
-            for p in params:
-                counter_p+=1
+            for s in stations:
+                counter_s+=1
                 filestring = get_filestring(s,p,tlims[0], tlims[1])
                 filestr = filestring.replace('.csv','_'+ methods+'.csv')
                 filestr = filestr.replace('A_Data', os.path.join('D_Model', 'Results', 'Diff_'+str(ddiff)))
@@ -514,21 +519,28 @@ def plot_auc_roc_summary():
                     _, _, _,auc = calc_roc_metrics(ts_eval, mthds[m])
                     l1 = plt.plot(auc, d ,marker[counter_p][counter_s], markersize=msize,
                         fillstyle=fillst, color=colors[counter_p])
+                    all_p_aucs.append(auc)
                 station_axes.append(l1[0])
             all_axes.append(tuple(station_axes))
-                    
-        plt.title(m+', ROC-AUC', fontsize=fs)            
+            mean_p_auc = np.nanmean(np.array(all_p_aucs)) 
+            plt.plot([mean_p_auc]*2, [-39,1],color= colors[counter_p])  
+            
+                
+        plt.title(m+titlestub, fontsize=fs)
+                  
+    
+        
+        # set xlims, ylims, labels
+    
+        plt.ylabel('Wassertiefe [m]')
+        plt.xlabel('Fläche unter ROC-Kurve')
         # get current yticklabel locations
         yticklocs = plt.gca().get_yticks()
         yticklabels = plt.gca().get_yticklabels()
         yticklabels = [ll._text.replace(chr(8722), '') for ll in yticklabels]
-    
-        
-        # set xlims, ylims, labels
-        plt.ylim((-39,1))
-        plt.ylabel('Wassertiefe [m]')
-        plt.xlabel('Fläche unter ROC-Kurve')
         plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
+        plt.ylim((-39,1))
+        plt.xlim((-0.01,1.01))
         plt.grid()
         
         if ddiff==2: # legend is only needed once
