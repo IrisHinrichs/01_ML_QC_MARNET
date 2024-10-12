@@ -364,7 +364,7 @@ def visualize_anomalies():
                 ylabelstr = '[° C]'
             else:
                 col='purple'
-                ylabelstr = '[]'
+                ylabelstr = '[PSU]'
                 
                 
             # read station data

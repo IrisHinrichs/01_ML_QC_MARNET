@@ -180,7 +180,7 @@ def plot_all_dl_time_series(station='North Sea Buoy III', p='WT',
         ylabelstr = '[° C]'
     else:
         col='purple'
-        ylabelstr = '[]'
+        ylabelstr = '[PSU]'
         
     if isinstance(dl, str) and dl =='all':
         # depth levels

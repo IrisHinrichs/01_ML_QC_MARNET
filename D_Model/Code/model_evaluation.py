@@ -290,7 +290,7 @@ def predictions_observations():
                 ylabelstr = '[° C]'
             else:
                 col='purple'
-                ylabelstr = '[]'
+                ylabelstr = '[PSU]'
             filestr = get_filestring(st, p, tlims[0], tlims[1])
             # replace following line with something like 
             # data = read_interp_data(filestr)
