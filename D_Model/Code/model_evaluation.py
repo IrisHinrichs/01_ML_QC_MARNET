@@ -45,7 +45,7 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 log_file = 'log_training.txt'
 
 # differencing parameter
-ddiff = 0
+ddiff = 2
 
 # where to save dataframe of training results
 savepath = os.path.join(
@@ -544,6 +544,7 @@ def plot_auc_roc_summary():
         plt.grid()
         
         if ddiff==2: # legend is only needed once
+            all_axes = [(p1,p2) for p1,p2 in zip(all_axes[0], all_axes[1])]
             plt.legend(all_axes,list(stationsdict.values()),
                     handler_map={tuple: HandlerTuple(ndivide=None)})
         
@@ -551,11 +552,151 @@ def plot_auc_roc_summary():
         plt.yticks(fontsize= fs)
         plt.xticks(fontsize=fs)
         savefigstr = os.path.join(savefigpath,m+'_ROC_AUC_summary.png')
-        fig.savefig(savefigstr, bbox_inches=bbox_inches)        
-                           
+        fig.savefig(savefigstr, bbox_inches=bbox_inches)      
+
+def plot_mase_summary():
+    ''' Visualize values for mean absoute scales error
+    for all time series and differencing of time series'''
+    # variables related to figure
+    plt.rcParams['figure.figsize'][1]=5*cm
+    
+    # model fitting results
+    model_fit = pd.read_csv(resultsfile)
+
+    savefigpath = os.path.join(evalpath, 'Predictions')
+    marker = [['1','v','P','s'], ['2', '^','*',  'D']]
+    msize=7
+    fillst= 'full'
+    colors = ['blue', 'purple']
+    titlestub=''
+    if ddiff ==2:
+        titlestub=', zweifache Differenzenbildung'    
+    
+    
+    fig = plt.figure(layout=layout)
+    counter_p = -1
+    all_axes = []
+    all_mean_mase = [np.nan]*len(model_fit)
+    for p in params:
+        counter_p+=1
+        counter_s = -1
+        station_axes = []
+        for s in stations:
+            counter_s+=1
+            filestring = get_filestring(s,p,tlims[0], tlims[1])
+            data=read_station_data(filestring)
+            
+            # only good data
+            data = data[data.QF3==2]
+
+            unique_d=list(set(data.Z_LOCATION))
+            unique_d.sort(reverse=True)
+            for d in unique_d:
+                all_mase = []
+                depth = abs(d)
+                ts = data[data["Z_LOCATION"]==d] # entries corresponding to depth level d
+
+                # find all time spans
+                time_spans = find_all_time_spans(time_vec=ts.index, tdel=1)
+            
+                # ocean_wnn
+                modelOutput = os.path.join(savepath,
+                                           stationsdict[s],
+                                           p, 
+                                           str(abs(d))+'m')
+                ii = model_fit.index[
+                    (model_fit.Station == s)
+                    & (model_fit.Parameter == p)
+                    & (model_fit.Depth == depth)
+                ].to_list()
+                train_interval = model_fit.loc[ii, ["start_train", "end_train"]]
+                begin = str(train_interval.start_train.values[0])
+                end = str(train_interval.end_train.values[0])
+                begin = begin[0:8]+'_'+begin[8:11]
+                end = end[0:8]+'_'+end[8:11]
+                modelOutput=os.path.join(modelOutput,
+                                begin+
+                                '_'+end)
+                tbegin = pd.Timestamp(dt.datetime.strptime(begin, '%Y%m%d_%H'))
+                tend =pd.Timestamp(dt.datetime.strptime(end, '%Y%m%d_%H'))
+                train_ind = np.where(((ts.index >= tbegin)&(ts.index<=tend)))
+                y_train = ts.iloc[train_ind].DATA_VALUE.values
+            
+                # do all predictions
+                for tp in time_spans.index:
+                    # define time stamps for current part of
+                    # time series
+                    end = tp+time_spans[tp]
+                    begin=pd.Timestamp(tp.year, tp.month, tp.day, tp.hour, 0)
+
+                    # skip time interval corresponding to training data
+                    if end ==tend and begin==tbegin:
+                        continue
+
+                    # get existing time stamps for part of time series
+                    inds = np.where(((ts.index >= begin)&(ts.index<=end)))
+                    linds = len(inds[0])
+
+                    if linds<=ownn_custPar.train_window_size+ddiff: 
+                        continue
+                    else:
+                        # difference time series ddiff times
+                        dat = differencing(ts.iloc[inds[0]].DATA_VALUE, ddiff)
+                        # Prediction with Ocean_WNN model
+                        ts_predict = run_ownn_algorithm(
+                            dat,
+                            modelOutput=modelOutput,
+                            executionType="predict"
+                        ) 
+                        
+                        ts_predict = np.append([np.nan]*ddiff, ts_predict)
+                        dat = np.append([np.nan]*ddiff, dat)
+                        nnans = np.intersect1d(np.where(np.isnan(ts_predict)==False),np.where(np.isnan(dat)==False))
+
+
+                        # MASE
+                        all_mase.append(mase(dat[nnans], ts_predict[nnans], y_train=y_train))
+
+                mean_mase = np.array(all_mase).mean()
+                l1 = plt.plot(mean_mase, d ,marker[counter_p][counter_s], markersize=msize,
+                    fillstyle=fillst, color=colors[counter_p])
+                all_mean_mase[ii[0]]= mean_mase
+            station_axes.append(l1[0])
+        all_axes.append(tuple(station_axes))
+        mm_mase = np.nanmean(np.array(all_mean_mase)) 
+        plt.plot([mm_mase]*2, [-39,1],color= colors[counter_p])  
+                
+    plt.title(titlestub, fontsize=fs)
+                
+    # set xlims, ylims, labels
+    plt.ylabel('Wassertiefe [m]')
+    plt.xlabel('MASE')
+    # get current yticklabel locations
+    yticklocs = plt.gca().get_yticks()
+    yticklabels = plt.gca().get_yticklabels()
+    yticklabels = [ll._text.replace(chr(8722), '') for ll in yticklabels]
+    plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
+    plt.ylim((-39,1))
+    #plt.xlim((-0.01,1.01))
+    plt.grid()
+    
+    if ddiff==2: # legend is only needed once
+        all_axes = [(p1,p2) for p1,p2 in zip(all_axes[0], all_axes[1])]
+        plt.legend(all_axes,list(stationsdict.values()),
+                handler_map={tuple: HandlerTuple(ndivide=None)})
+    
+    # customize axes labels etc.
+    plt.yticks(fontsize= fs)
+    plt.xticks(fontsize=fs)
+    savefigstr = os.path.join(savefigpath,'MASE_summary.png')
+    fig.savefig(savefigstr, bbox_inches=bbox_inches) 
+
+        
+                        
 if __name__=='__main__':   
     #summarize_model_fitting()
     #predictions_observations()
     # plot_roc_metrics()
-    plot_auc_roc_summary()
+    #plot_auc_roc_summary()
+    plot_mase_summary()
     #main()
