@@ -45,7 +45,7 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 log_file = 'log_training.txt'
 
 # differencing parameter
-ddiff = 0
+ddiff = 2
 
 # where to save dataframe of training results
 savepath = os.path.join(
@@ -256,7 +256,7 @@ def plot_roc_metrics():
                 plt.legend(legendhandles, legendstrings)
                 titlestring = stationsdict[st]+', '+\
                     str(depth)+' m,'+\
-                        paramdict[p].replace('[° C]', '').replace('[]', '')
+                        paramdict[p].replace('[° C]', '').replace('[PSU]', '')
                                     
                 plt.title(titlestring, fontsize=fs)
                 #plt.legend()
@@ -392,84 +392,140 @@ def predictions_observations():
                         #plt.show()
                         fig.savefig(os.path.join(savefigpath,figname), bbox_inches=bbox_inches)
                         plt.close(fig)
-# def model_validation():
-#     ''' validate the model by comparing observations
-#     and predictions on the next time span of good data'''
-#     # define cross validation parameters
-    
-#     for st in stations:
-#         for p in params:
-#             filestr = get_filestring(st, p, tlims[0], tlims[1])
-#             # replace following line with something like 
-#             # data = read_interp_data(filestr)
-#             data=read_station_data(filestr=filestr)
-#             unique_d=list(set(data.Z_LOCATION))
-#             unique_d.sort(reverse=True)
-#             for d in unique_d:
-#                 # ocean_wnn, validation
-#                 # define and create directory if necessary
-#                 modelOutputDir = os.path.join(currentdir,
-#                                               'D_Model',
-#                                            'Evaluation',
-#                                            'Validation_PredictionModel' 
-#                                            'Ocean_WNN', 
-#                                            stationsdict[st],
-#                                            p, 
-#                                            str(abs(d))+'m')
-#                 if not os.path.isdir(modelOutputDir):
-#                     os.makedirs(modelOutputDir)
+def model_cross_validation():
+    ''' Train model on single period of good data and 
+    validate it comparing observations
+    and predictions on on all other periods of good data
+    '''
+    min_day = 7
+    # minimum number of days in training data 
+
+    cross_val_data = []
+
+    resultsfile = os.path.join(currentdir,
+                                'D_Model',
+                                'Cross_Validation',
+                                'Ocean_WNN',
+                                'Diff_'+str(ddiff),
+                                'results_cross_val.csv'
+    )   
+    for st in stations:
+        if st=='Fehmarn Belt Buoy':
+            continue
+        for p in params:
+            filestr = get_filestring(st, p, tlims[0], tlims[1])
+            data=read_station_data(filestr=filestr)
+            unique_d=list(set(data.Z_LOCATION))
+            unique_d.sort(reverse=True)
+            for d in unique_d:
+                depth=abs(d)
+                # ocean_wnn, validation
                 
+                ts = data[data["Z_LOCATION"]==d] # entries corresponding to depth level d
                 
-#                 ts = data[data["Z_LOCATION"]==d] # entries corresponding to depth level d
-                
-#                 good_vals = ts[ts['QF3']==2] # only use good values for training based on original times series
-#                 time_spans = find_all_time_spans(time_vec=good_vals.index, tdel=1)
+                good_vals = ts[ts['QF3']==2] # only use good values for training based on original times series
 
-#                 # # sort time spans by length, begining with longest
-#                 time_spans_sort = time_spans.sort_values(ascending=False)
+                time_spans = find_all_time_spans(time_vec=good_vals.index, tdel=1)
 
-#                 # training should be done with longest time series part
-#                 pp = time_spans_sort.index[0]
-                
-#                 # define time stamps for current part of
-#                 # time series
-#                 end = p+time_spans[pp]
-#                 begin=pd.Timestamp(pp.year, pp.month, pp.day, pp.hour, 0)
+                # # sort time spans by length, begining with longest
+                time_spans_sort = time_spans.sort_values(ascending=False)
 
-#                 # get existing time stamps for part of time series
-#                 inds = np.where(((good_vals.index >= begin)&(good_vals.index<=end)))
+                # only keep those time spans longer than min_day days
+                time_spans = time_spans_sort[time_spans_sort>=dt.timedelta(min_day)]
 
-#                 modelOutput = os.path.join(currentdir,
-#                                                 'D_Model',
-#                                             'Trained_Models', 
-#                                             'Ocean_WNN', 
-#                                             stationsdict[st],
-#                                             p, 
-#                                             str(abs(d))+'m')
-#                 train_interval= model_fit.loc[
-#                     (model_fit.Station == st)
-#                     & (model_fit.Parameter == p)
-#                     & (model_fit.Depth == depth),
-#                     ['start_train', 'end_train']
-#                     ]
-#                 begin = str(train_interval.start_train.values[0])
-#                 end = str(train_interval.end_train.values[0])
-#                 begin = begin[0:8]+'_'+begin[8:11]
-#                 end = end[0:8]+'_'+end[8:11]
-#                 modelOutput=os.path.join(modelOutput,
-#                                 begin+
-#                                 '_'+end)
-                
+                # training with several parts of time series
+                for pp in time_spans.index:
+                    # initialize list for collection of all mase values of all time series parts
+                    all_mase = [] 
+                    
+                    # define time stamps for current part of time series
+                    end = pp+time_spans[pp]
+                    begin=pd.Timestamp(pp.year, pp.month, pp.day, pp.hour, 0)
 
-#                 # split data into train and test data
+                    # get existing time stamps for part of time series
+                    inds = np.where(((good_vals.index >= begin)&(good_vals.index<=end)))
+                    
+                    # difference time series ddiff times
+                    dat = differencing(good_vals.iloc[inds[0]].DATA_VALUE, ddiff)
+                    
+                    model_name = (
+                        dt.datetime.strftime(begin, "%Y%m%d_%H")
+                        + "_"
+                        + dt.datetime.strftime(end, "%Y%m%d_%H")
+                    )
+                    # define and create directory if necessary
+                    modelOutputDir = os.path.join(currentdir,
+                                              'D_Model',
+                                           'Cross_Validation',
+                                           'Ocean_WNN',
+                                           'Diff_'+str(ddiff), 
+                                           stationsdict[st],
+                                           p, 
+                                           str(abs(d))+'m', 
+                                           model_name)
+                    if not os.path.isdir(modelOutputDir):
+                        os.makedirs(modelOutputDir)
+                   
+                    modelOutput=os.path.join(modelOutputDir,
+                                            model_name)
+                    log_file = os.path.join(modelOutputDir, 
+                                            'log_file.txt')
 
+                    # train model on current part of time series 
+                    run_ownn_algorithm(
+                        dat,
+                        modelOutput=modelOutput,
+                        executionType="train",
+                        logfile=log_file,
+                    )
+                    y_train = dat
+                    for qq in time_spans_sort.index:
+                        # skip time interval corresponding to training data
+                        if qq==pp:
+                            continue
+                        # define time stamps for current part of
+                        # time series
+                        end = qq+time_spans_sort[qq]
+                        begin=pd.Timestamp(qq.year, qq.month, qq.day, qq.hour, 0)
 
-#                 run_ownn_algorithm(
-#                     data,
-#                     modelOutput=modelOutput,
-#                     executionType="train",
-#                     logfile=log_train,
-#                 )
+                        # get existing time stamps for part of time series
+                        inds = np.where(((good_vals.index >= begin)&(good_vals.index<=end)))
+                        linds = len(inds[0])
+
+                        if linds<=ownn_custPar.train_window_size+ddiff: 
+                            continue
+                        else:
+                            # difference time series ddiff times
+                            dat = differencing(good_vals.iloc[inds[0]].DATA_VALUE, ddiff)
+                            # Prediction with Ocean_WNN model
+                            ts_predict = run_ownn_algorithm(
+                                dat,
+                                modelOutput=modelOutput,
+                                executionType="predict"
+                            ) 
+                            
+                            # MASE of current time span
+                            nnans = np.intersect1d(np.where(np.isnan(ts_predict)==False),np.where(np.isnan(dat)==False))
+                            all_mase.append(mase(dat[nnans], np.array(ts_predict)[nnans], y_train=y_train))
+                    # MASE averaged over all time spans except training intervall
+                    mean_mase = np.array(all_mase).mean()
+                    new_entry = [st, p, depth,model_name, len(y_train), mean_mase]
+                    cross_val_data.append(new_entry)
+
+# fill dataframe
+    cross_val_data = pd.DataFrame(
+        cross_val_data,
+        columns=[
+            "Station",
+            "Parameter",
+            "Depth",
+            "model name",
+            "len_train",
+            "MASE"
+        ],
+    )
+   # save results of model fitting
+    cross_val_data.to_csv(resultsfile)
 
 def plot_auc_roc_summary():
     ''' Visualize values for area under ROC curve for all
@@ -698,5 +754,6 @@ if __name__=='__main__':
     #predictions_observations()
     # plot_roc_metrics()
     #plot_auc_roc_summary()
-    plot_mase_summary()
+    #plot_mase_summary()
+    model_cross_validation()
     #main()
