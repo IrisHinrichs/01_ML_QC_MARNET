@@ -10,6 +10,7 @@ from matplotlib import pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.legend_handler import HandlerTuple
 from sktime.performance_metrics.forecasting import mean_absolute_scaled_error as mase
+import shutil
 
 # Add absolute path of directory 
 # 01_ML_QC_MARNET to sys.path
@@ -410,8 +411,6 @@ def model_cross_validation():
                                 'results_cross_val.csv'
     )   
     for st in stations:
-        if st=='Fehmarn Belt Buoy':
-            continue
         for p in params:
             filestr = get_filestring(st, p, tlims[0], tlims[1])
             data=read_station_data(filestr=filestr)
@@ -747,8 +746,43 @@ def plot_mase_summary():
     savefigstr = os.path.join(savefigpath,'MASE_summary.png')
     fig.savefig(savefigstr, bbox_inches=bbox_inches) 
 
-        
-                        
+def choose_best_model():
+    '''Chooses best model out of cross validation results and 
+    copies it to respective folder in 'Trained_Models'''
+    TrainedModelsDir = os.path.join(
+        currentdir, "D_Model", "Trained_Models", "Ocean_WNN", "Diff_" + str(ddiff)
+    )
+
+    CrossValModelsDir = os.path.join(
+        currentdir, "D_Model", "Cross_Validation", "Ocean_WNN", "Diff_" + str(ddiff)
+    )
+    # load dataframe containing results of cross validation
+    crossval_res = os.path.join(CrossValModelsDir, "results_cross_val.csv")
+    cross = pd.read_csv(crossval_res)
+
+    # get best model (corresponding to lowest MASE value)
+    for st in stations:
+        for p in params:
+            sub_cross= cross.loc[
+                    (cross.Station == st)
+                    & (cross.Parameter == p)
+                    ]
+            unique_d= np.unique(sub_cross.Depth)
+            for d in unique_d:
+                curr_mase = sub_cross['Depth'==d].MASE
+                ind = np.where(curr_mase==np.min(curr_mase))
+                best_model = sub_cross.iloc[ind].model_name
+
+                # copy best model to directory "Trained Models"
+                SrcDir = os.path.join(
+                    CrossValModelsDir, st, p, str(float(d)) + "m", best_model
+                )
+                DestDir = os.path.join(
+                    TrainedModelsDir, st, p, str(float(d)) + "m"
+                )
+                for f in os.get
+                shutil.copy(src_file,dest_file )
+
 if __name__=='__main__':   
     #summarize_model_fitting()
     #predictions_observations()
