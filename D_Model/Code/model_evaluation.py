@@ -780,8 +780,18 @@ def choose_best_model():
                 DestDir = os.path.join(
                     TrainedModelsDir, st, p, str(float(d)) + "m"
                 )
-                for f in os.get
-                shutil.copy(src_file,dest_file )
+                if not os.path.isdir(DestDir):
+                    os.makedirs(DestDir)
+                
+                # delete all files in destination direcory
+                for f in os.listdir(DestDir):
+                    os.remove(os.path.join(DestDir,f))
+
+                # copy new files to destination directory
+                for f in os.listdir(SrcDir):
+                    src_file = os.path.join(SrcDir,f)
+                    dest_file = os.path.join(DestDir,f)
+                    shutil.copy(src_file,dest_file)
 
 if __name__=='__main__':   
     #summarize_model_fitting()
