@@ -756,6 +756,9 @@ def choose_best_model():
     CrossValModelsDir = os.path.join(
         currentdir, "D_Model", "Cross_Validation", "Ocean_WNN", "Diff_" + str(ddiff)
     )
+
+    optimal_model_data = []
+
     # load dataframe containing results of cross validation
     crossval_res = os.path.join(CrossValModelsDir, "results_cross_val.csv")
     cross = pd.read_csv(crossval_res)
@@ -768,17 +771,22 @@ def choose_best_model():
                     & (cross.Parameter == p)
                     ]
             unique_d= np.unique(sub_cross.Depth)
+            all_inds = list(range(len(sub_cross)))
             for d in unique_d:
-                curr_mase = sub_cross['Depth'==d].MASE
-                ind = np.where(curr_mase==np.min(curr_mase))
-                best_model = sub_cross.iloc[ind].model_name
+                curr_inds = list(np.where(sub_cross.Depth==d)[0])
+                curr_mase = sub_cross.iloc[curr_inds].MASE
+                ind = list(curr_mase).index(np.min(curr_mase))
+                best_model = sub_cross.iloc[curr_inds[ind]]['model name']
+
+                new_row = [e for e in sub_cross.iloc[curr_inds[ind]]]
+                optimal_model_data.append(new_row[1::])
 
                 # copy best model to directory "Trained Models"
                 SrcDir = os.path.join(
-                    CrossValModelsDir, st, p, str(float(d)) + "m", best_model
+                    CrossValModelsDir, stationsdict[st], p, str(float(d)) + "m", best_model
                 )
                 DestDir = os.path.join(
-                    TrainedModelsDir, st, p, str(float(d)) + "m"
+                    TrainedModelsDir, stationsdict[st], p, str(float(d)) + "m"
                 )
                 if not os.path.isdir(DestDir):
                     os.makedirs(DestDir)
@@ -792,6 +800,21 @@ def choose_best_model():
                     src_file = os.path.join(SrcDir,f)
                     dest_file = os.path.join(DestDir,f)
                     shutil.copy(src_file,dest_file)
+
+    # fill dataframe
+    optimal_model_data = pd.DataFrame(
+        optimal_model_data,
+        columns=[
+            "Station",
+            "Parameter",
+            "Depth",
+            "model name",
+            "len_train",
+            "MASE"
+        ],
+    )
+    optimal_model = os.path.join(CrossValModelsDir, "optimal_model_data.csv")
+    optimal_model_data.to_csv(optimal_model)
 
 if __name__=='__main__':   
     #summarize_model_fitting()
