@@ -65,43 +65,49 @@ def ad_mm(ts):
                                                     # of time series are handled
     return scores
 
-def ad_ownn(ts,ts_interp,modelOutput, ddiff=ddiff):
-    good_vals = ts[ts['QF3']==2] # only use good values for training based on original times series
-    time_spans = find_all_time_spans(time_vec=good_vals.index, tdel=1)
+def ad_ownn(ts,ts_interp,modelOutput, ddiff=ddiff, train=False):
+    if train:
+        good_vals = ts[ts['QF3']==2] # only use good values for training based on original times series
+        time_spans = find_all_time_spans(time_vec=good_vals.index, tdel=1)
 
-    # # sort time spans by length, begining with longest
-    time_spans_sort = time_spans.sort_values(ascending=False)
+        # # sort time spans by length, begining with longest
+        time_spans_sort = time_spans.sort_values(ascending=False)
 
-    # training should be done with longest time series part
-    p = time_spans_sort.index[0]
-    
-    # define time stamps for current part of
-    # time series
-    end = p+time_spans[p]
-    begin=pd.Timestamp(p.year, p.month, p.day, p.hour, 0)
+        # training should be done with longest time series part
+        p = time_spans_sort.index[0]
+        
+        # define time stamps for current part of
+        # time series
+        end = p+time_spans[p]
+        begin=pd.Timestamp(p.year, p.month, p.day, p.hour, 0)
 
-    # get existing time stamps for part of time series
-    inds = np.where(((good_vals.index >= begin)&(good_vals.index<=end)))
+        # get existing time stamps for part of time series
+        inds = np.where(((good_vals.index >= begin)&(good_vals.index<=end)))
 
-    # detect anomalies
-    linds = len(inds[0])
+        # detect anomalies
+        linds = len(inds[0])
 
-    log_train = os.path.join(modelOutput, 'log_training.txt')
-    modelOutput=os.path.join(modelOutput,
-                                begin.strftime('%Y%m%d_%H')+
-                                '_'+end.strftime('%Y%m%d_%H'))
-    
-    data = differencing(good_vals.iloc[inds].DATA_VALUE, ddiff)
-    run_ownn_algorithm(
-        data,
-        modelOutput=modelOutput,
-        executionType="train",
-        logfile=log_train,
-    )
+        log_train = os.path.join(modelOutput, 'log_training.txt')
+        modelOutput=os.path.join(modelOutput,
+                                    begin.strftime('%Y%m%d_%H')+
+                                    '_'+end.strftime('%Y%m%d_%H'))
+        
+        data = differencing(good_vals.iloc[inds].DATA_VALUE, ddiff)
+        run_ownn_algorithm(
+            data,
+            modelOutput=modelOutput,
+            executionType="train",
+            logfile=log_train,
+        )
 
     # initialize scores as array of nans
     scores = np.zeros((len(ts_interp)))
     scores[:]=np.nan
+
+    # get model
+    for f in os.listdir(modelOutput):
+        if f != 'log_training.txt':
+            best_model = os.path.join(modelOutput, f)
 
     # iterate over all parts of the interpolated time series
     time_spans = find_all_time_spans(time_vec=ts_interp.index, tdel=10)
@@ -122,7 +128,9 @@ def ad_ownn(ts,ts_interp,modelOutput, ddiff=ddiff):
             continue # part of time series is too short
         else:
             data = differencing(ts_interp.iloc[inds].DATA_VALUE, ddiff)
-            scores[inds[0][ddiff::]]=run_ownn_algorithm(data, modelOutput=modelOutput, executionType='execute')             
+            scores[inds[0][ddiff::]] = run_ownn_algorithm(
+                data, modelOutput=best_model, executionType="execute"
+            )
     return scores
 
 def main():
