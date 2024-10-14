@@ -25,7 +25,7 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 import numpy as np  # noqa: E402
 
 # differencing parameter
-ddiff = 0
+ddiff = 2
 
 # where to save results
 if platform.uname().node=="VC21094": # Platform is BSH-VC
