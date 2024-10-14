@@ -106,7 +106,7 @@ def ad_ownn(ts,ts_interp,modelOutput, ddiff=ddiff, train=False):
 
     # get model
     for f in os.listdir(modelOutput):
-        if f != 'log_training.txt':
+        if f != 'log_file.txt':
             best_model = os.path.join(modelOutput, f)
 
     # iterate over all parts of the interpolated time series
@@ -136,8 +136,6 @@ def ad_ownn(ts,ts_interp,modelOutput, ddiff=ddiff, train=False):
 def main():
     # differencing parameter
     for st in stations:
-        if stationsdict[st] != "Nordsee III":
-            continue
         for p in params:
             filestr = get_filestring(st, p, tlims[0], tlims[1])
             # replace following line with something like 
@@ -171,7 +169,9 @@ def main():
                 if not os.path.isdir(modelOutputDir):
                     os.makedirs(modelOutputDir)
                 # Input for ocean_wnn is original time series
-                scores = ad_ownn(ts,ts_interp, modelOutput=modelOutputDir, ddiff=ddiff)
+                scores = ad_ownn(
+                    ts, ts_interp, modelOutput=modelOutputDir, ddiff=ddiff, train=False
+                )
                 ts_interp = ts_interp.assign(ad_ownn=scores)
 
                 # STEP III: Concatenate single time series pieces to dataframe again
