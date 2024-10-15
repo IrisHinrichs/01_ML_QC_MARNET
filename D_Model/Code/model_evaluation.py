@@ -531,6 +531,7 @@ def plot_auc_roc_summary():
     time series, both methods (oceanwnn and median) and 
     differencing of time series'''
     # variables related to figure
+    plt.rcParams['figure.figsize'][0]=16*cm
     plt.rcParams['figure.figsize'][1]=5*cm
     
     savefigpath = os.path.join(evalpath, 'ROC_metrics')
@@ -613,8 +614,8 @@ def plot_mase_summary():
     ''' Visualize values for mean absoute scales error
     for all time series and differencing of time series'''
     # variables related to figure
+    plt.rcParams['figure.figsize'][0]=16*cm
     plt.rcParams['figure.figsize'][1]=5*cm
-    
     # model fitting results
     model_fit = pd.read_csv(resultsfile)
 
@@ -623,9 +624,9 @@ def plot_mase_summary():
     msize=7
     fillst= 'full'
     colors = ['blue', 'purple']
-    titlestub=''
+    titlestub='Originalzeitreihe'
     if ddiff ==2:
-        titlestub=', zweifache Differenzenbildung'    
+        titlestub='Zweifache Differenzenbildung'    
     
     
     fig = plt.figure(layout=layout)
@@ -732,7 +733,7 @@ def plot_mase_summary():
     yticklabels = [ll._text.replace(chr(8722), '') for ll in yticklabels]
     plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
     plt.ylim((-39,1))
-    #plt.xlim((-0.01,1.01))
+    plt.xlim((0.15,1.2))
     plt.grid()
     
     if ddiff==2: # legend is only needed once
@@ -819,8 +820,8 @@ def choose_best_model():
 if __name__=='__main__':   
     # summarize_model_fitting()
     # predictions_observations()
-    # plot_roc_metrics()
-    # plot_auc_roc_summary()
+    #plot_roc_metrics()
+    #plot_auc_roc_summary()
     plot_mase_summary()
     # model_cross_validation()
     # choose_best_model()
