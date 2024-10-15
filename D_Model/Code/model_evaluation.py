@@ -46,7 +46,7 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 log_file = 'log_file.txt'
 
 # differencing parameter
-ddiff = 0
+ddiff = 2
 
 # where to save dataframe of training results
 savepath = os.path.join(
@@ -819,9 +819,9 @@ def choose_best_model():
 if __name__=='__main__':   
     # summarize_model_fitting()
     # predictions_observations()
-    plot_roc_metrics()
-    #plot_auc_roc_summary()
-    #plot_mase_summary()
+    # plot_roc_metrics()
+    # plot_auc_roc_summary()
+    plot_mase_summary()
     # model_cross_validation()
     # choose_best_model()
     #main()
