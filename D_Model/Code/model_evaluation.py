@@ -46,7 +46,7 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 log_file = 'log_file.txt'
 
 # differencing parameter
-ddiff = 2
+ddiff = 0
 
 # where to save dataframe of training results
 savepath = os.path.join(
