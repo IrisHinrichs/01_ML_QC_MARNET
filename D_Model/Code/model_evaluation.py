@@ -61,7 +61,7 @@ resultsfile = os.path.join(savepath, 'results_model_fitting.csv')
 # where to save results from evaluation
 evalpath = os.path.join(currentdir, 'D_Model','Evaluation', 'Figures', "Diff_"+str(ddiff))
 
-mthds = {'Median-Methode': 'ad_mm', 'Ocean_WNN': 'ad_ownn'}
+mthds = {'Ocean_WNN': 'ad_ownn','Median-Methode': 'ad_mm'}
 
 def optimal_thresh(tpr: np.array, fpr: np.array, threshs: np.array) -> tuple:
     '''Find optimal threshold for classifier based on both hit
@@ -240,6 +240,8 @@ def plot_roc_metrics():
                 # temporal restriction, only data after training phase
                 # ts_eval = after_training_phase(st, p, depth, ts_eval)
                 for m in mthds:
+                    if ddiff==2 and m=="Median-Methode":
+                        continue
                     fpr, tpr, threshs,auc = calc_roc_metrics(ts_eval, mthds[m])
                     if all([np.isnan(fpr).all(), np.isnan(tpr).all(), np.isnan(threshs).all()]): # no anomalies in ground truth data
                         continue
@@ -251,7 +253,7 @@ def plot_roc_metrics():
                     legendhandles.append(l1)
                     legendstrings.append(m+', AUC='+str(round(auc,2)))
                 legendhandles.append(l2)    
-                legendstrings.append('optimaler Schwellwert')
+                legendstrings.append('Jmax')
                 plt.xlabel('FPR')
                 plt.ylabel('TPR')
                 plt.legend(legendhandles, legendstrings)
@@ -820,9 +822,9 @@ def choose_best_model():
 if __name__=='__main__':   
     # summarize_model_fitting()
     # predictions_observations()
-    #plot_roc_metrics()
+    plot_roc_metrics()
     #plot_auc_roc_summary()
-    plot_mase_summary()
+    #plot_mase_summary()
     # model_cross_validation()
     # choose_best_model()
     #main()
