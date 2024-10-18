@@ -46,7 +46,7 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 log_file = 'log_file.txt'
 
 # differencing parameter
-ddiff = 0
+ddiff = 2
 
 # where to save dataframe of training results
 savepath = os.path.join(
@@ -267,6 +267,82 @@ def plot_roc_metrics():
                 #plt.show()
                 fig.savefig(os.path.join(savefigpath,figname), bbox_inches=bbox_inches)
                 plt.close(fig)
+def plot_tpr_fpr_summary():
+    '''Plots (tpr,fpr)-value pair for Jmax for all stations, parameters and depth levels
+    presenting results of Ocean_WNN and Median-Method'''
+    # variables related to figure
+    plt.rcParams['figure.figsize'][0]=6*cm
+    plt.rcParams['figure.figsize'][1]=6*cm
+    
+    savefigpath = os.path.join(evalpath, 'ROC_metrics')
+    marker = [['1','v','P','s'], ['2', '^','*',  'D']]
+    msize=5
+    fillst= 'full'
+    colors = ['blue', 'purple']
+    titlestub=''
+    if ddiff ==2:
+        titlestub=', 2x Diff.'    
+    
+    for m in mthds:
+        counter_p = -1
+        all_axes = []
+        if m=='Median-Methode' and ddiff!=0:
+            continue # median method was not applied on differenced time series
+        fig = plt.figure(layout=layout)
+        for p in params:
+            counter_p+=1
+            counter_s = -1
+            station_axes = []
+            for s in stations:
+                counter_s+=1
+                filestring = get_filestring(s,p,tlims[0], tlims[1])
+                filestr = filestring.replace('.csv','_'+ methods+'.csv')
+                filestr = filestr.replace('A_Data', os.path.join('D_Model', 'Results', 'Diff_'+str(ddiff)))
+                data=pd.read_csv(filestr, index_col='TIME_VALUE')
+                data.index = pd.to_datetime(data.index)
+                unique_d=list(set(data.Z_LOCATION))
+                unique_d.sort(reverse=True)
+                for d in unique_d:
+                    ts = data[data["Z_LOCATION"]==d] # entries corresponding to depth level d
+                    # choose evaluation data
+                    # needs be no-NaN values in ad_mm- as well as ad_ownn-column
+                    # plus optionally data after training phase of Ocean_WNN prediciton model
+                    ts_eval = non_NaN(ts)
+                
+                    # value pair(tpr, fpr) corresponding to Jmax
+                    fpr, tpr, threshs,_ = calc_roc_metrics(ts_eval, mthds[m])
+                    if all([np.isnan(fpr).all(), np.isnan(tpr).all(), np.isnan(threshs).all()]): # no anomalies in ground truth data
+                        continue
+                    opt_thresh, index = optimal_thresh(tpr, fpr, threshs)
+                    (l2,) = plt.plot(
+                        fpr[index],
+                        tpr[index],
+                        marker[counter_p][counter_s],
+                        markersize=msize,
+                        fillstyle=fillst,
+                        color=colors[counter_p],
+                    )
+                station_axes.append(l2)
+            all_axes.append(tuple(station_axes))   
+        
+        plt.xlim((-0.1,1.1))
+        plt.ylim((-.1,1.1))
+        plt.xlabel('FPR')
+        plt.ylabel('TPR')
+        titlestring = m+titlestub
+        plt.title(titlestring, fontsize=fs)
+        plt.grid()
+            # customize axes labels etc.
+        plt.yticks(fontsize= fs)
+        plt.xticks(fontsize=fs)
+
+        # if ddiff==2: # legend is only needed once
+        #     all_axes = [(p1,p2) for p1,p2 in zip(all_axes[0], all_axes[1])]
+        #     plt.legend(all_axes,list(stationsdict.values()),
+        #             handler_map={tuple: HandlerTuple(ndivide=None)})
+        savefigstr = os.path.join(savefigpath,m+'_TPR_FPR_summary.png')
+        fig.savefig(savefigstr, bbox_inches=bbox_inches)
+                
 
 def reverse_differencing(startpoints: np.array, ts_predict: np.array)->np.array:
     ''' Does not really make sense because deviations between predictions and observations
@@ -822,7 +898,8 @@ def choose_best_model():
 if __name__=='__main__':   
     # summarize_model_fitting()
     # predictions_observations()
-    plot_roc_metrics()
+    # plot_roc_metrics()
+    plot_tpr_fpr_summary()
     #plot_auc_roc_summary()
     #plot_mase_summary()
     # model_cross_validation()
