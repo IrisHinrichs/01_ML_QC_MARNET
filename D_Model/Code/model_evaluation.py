@@ -46,7 +46,7 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 log_file = 'log_file.txt'
 
 # differencing parameter
-ddiff = 2
+ddiff = 0
 
 # where to save dataframe of training results
 savepath = os.path.join(
@@ -355,7 +355,7 @@ def reverse_differencing(startpoints: np.array, ts_predict: np.array)->np.array:
     return ts_predict
 
 def predictions_observations():
-    '''Compare Ocean_WNN-predicitions and actual observations'''
+    '''Compare Ocean_WNN-predictions and actual observations'''
     # define figure height
     plt.rcParams['figure.figsize'][0]=16.5*cm
     plt.rcParams['figure.figsize'][1]=6*cm
@@ -895,13 +895,208 @@ def choose_best_model():
     optimal_model = os.path.join(CrossValModelsDir, "optimal_model_data.csv")
     optimal_model_data.to_csv(optimal_model)
 
+def visualize_predictions_anomalies(stations = stations, params=params, dlevels='all'):
+    '''Plots time series of observations and predictions and marks
+    anomalies found by all methods'''
+    model_fit = pd.read_csv(resultsfile)
+    # define figure height
+    plt.rcParams['figure.figsize'][0]=16.5*cm
+    plt.rcParams['figure.figsize'][1]=6*cm
+    #plt.rcdefaults()
+
+    # length visualized section
+    len_sect = 7*24 # one week
+    extension =24 # one day before and after section                            
+    
+    for st in stations:
+        stname = stationsdict[st]
+        for p in params:
+            #define colormap
+            if p == 'WT':
+                col='blue'
+                ylabelstr = '[° C]'
+            else:
+                col='purple'
+                ylabelstr = '[PSU]'
+                
+                
+            # read data 
+            filestr = get_filestring(st,p)
+            filestr = filestr.replace('.csv','_'+ methods+'.csv')
+            filestr = filestr.replace('A_Data', os.path.join('D_Model', 'Results', 'Diff_'+str(ddiff)))
+            data=pd.read_csv(filestr, index_col='TIME_VALUE')
+            data.index = pd.to_datetime(data.index)
+            unique_d=list(set(data.Z_LOCATION))
+            unique_d.sort(reverse=True)
+
+            if dlevels != 'all':
+                unique_d = dlevels
+
+            for d in unique_d:
+                depth = abs(d)
+                ts_interp = data[data["Z_LOCATION"]==d] # entries corresponding to depth level d
+                
+                # choose evaluation data
+                # needs be no-NaN values in ad_mm- as well as ad_ownn-column
+                # plus optionally data after training phase of Ocean_WNN prediciton model
+                ts_eval = non_NaN(ts_interp)
+
+                 # get thresholds for anomaly detection of ocean_wnn and median method
+                if ddiff==2:
+                    fpr, tpr, threshs,_ = calc_roc_metrics(ts_eval, 'ad_ownn')
+                    if all([np.isnan(fpr).all(), np.isnan(tpr).all(), np.isnan(threshs).all()]): # no anomalies in ground truth data
+                        ownn_thresh=np.nan
+                    else:
+                        ownn_thresh, index = optimal_thresh(tpr, fpr, threshs)
+                else:
+                    fpr, tpr, threshs,_ = calc_roc_metrics(ts_eval, 'ad_ownn')
+                    if all([np.isnan(fpr).all(), np.isnan(tpr).all(), np.isnan(threshs).all()]): # no anomalies in ground truth data
+                        ownn_thresh=np.nan
+                    else:
+                        ownn_thresh, index = optimal_thresh(tpr, fpr, threshs)
+
+                    fpr, tpr, threshs,_ = calc_roc_metrics(ts_eval, 'ad_mm')
+                    if all([np.isnan(fpr).all(), np.isnan(tpr).all(), np.isnan(threshs).all()]): # no anomalies in ground truth data
+                        mm_thresh=np.nan
+                    else:
+                        mm_thresh, index = optimal_thresh(tpr, fpr, threshs)
+                
+
+
+
+                # find all time spans
+                time_spans = find_all_time_spans(time_vec=ts_interp.index, tdel=10)
+            
+                # ocean_wnn
+                modelOutput = os.path.join(savepath,
+                                           stationsdict[st],
+                                           p, 
+                                           str(abs(d))+'m')
+                train_interval= model_fit.loc[
+                    (model_fit.Station == st)
+                    & (model_fit.Parameter == p)
+                    & (model_fit.Depth == depth),
+                    ['start_train', 'end_train']
+                    ]
+                begin = str(train_interval.start_train.values[0])
+                end = str(train_interval.end_train.values[0])
+                begin = begin[0:8]+'_'+begin[8:11]
+                end = end[0:8]+'_'+end[8:11]
+                modelOutput=os.path.join(modelOutput,
+                                begin+
+                                '_'+end)
+            
+                for tp in time_spans.index:
+                    # define time stamps for current part of
+                    # time series
+                    end = tp+time_spans[tp]
+                    begin=pd.Timestamp(tp.year, tp.month, tp.day, tp.hour, 0)
+
+                    # get existing time stamps for part of time series
+                    inds = np.where(((ts_interp.index >= begin)&(ts_interp.index<=end)))
+                    linds = len(inds[0])
+
+                    if linds<=ownn_custPar.train_window_size+ddiff: 
+                        continue
+                    else:
+                        # difference time series ddiff times
+                        dat_res = ts_interp.iloc[inds[0]]
+                        dat = differencing(dat_res.DATA_VALUE, ddiff)
+                        # Prediction with Ocean_WNN model
+                        ts_predict = run_ownn_algorithm(
+                            dat,
+                            modelOutput=modelOutput,
+                            executionType="predict"
+                        ) 
+                        
+                        ts_predict = np.append([np.nan]*ddiff, ts_predict)
+                        dat = np.append([np.nan]*ddiff, dat)
+                        time_vec = pd.date_range(start=begin, end=end, freq= 'h')
+
+                        curr_end=dat_res.index[0]
+                        while curr_end < dat_res.index[-1]:
+                            fig = plt.figure()
+                            # time stamp of starting point of current 
+                            start_sect =curr_end
+                            end_sect = start_sect+dt.timedelta(hours=int(len_sect))
+                            start_str = str(curr_end).replace(' ', '_')
+                            start_str = start_str.replace(':', '-')
+                            end_str = str(end_sect).replace(' ', '_')
+                            end_str = end_str.replace(':', '-')
+                            figname = start_str+'__'+end_str+'.png'
+                            # start of visualization
+                            start_vis = start_sect-dt.timedelta(hours=extension)
+                            # end of visualization
+                            end_vis = start_sect+dt.timedelta(hours=(int(len_sect)+extension))
+                            # data to visualize
+                            vis_mask = (dat_res.index>=start_vis) & (dat_res.index <=end_vis)
+                            vis_data = dat_res.loc[vis_mask]
+                            vis_anom_QF3 = vis_data.DATA_VALUE[vis_data.QF3.isin([3,4])]
+                            vis_anom_QF1 = vis_data.DATA_VALUE[vis_data.QF1.isin([3,4])]
+                            vis_obs = vis_data.DATA_VALUE
+                            vis_preds = ts_predict[vis_mask]
+                            vis_tvec = time_vec[vis_mask]
+                            if not np.isnan(ownn_thresh):
+                                vis_anom_ownn = vis_data.DATA_VALUE[vis_data.ad_ownn>=ownn_thresh]
+                            else:
+                                vis_anom_ownn = np.nan
+                            if not np.isnan(mm_thresh):
+                                vis_anom_mm = vis_data.DATA_VALUE[vis_data.ad_mm>=mm_thresh]
+                            else:
+                                vis_anom_mm = np.nan
+                            
+                            # plot time series
+                            l1 = plt.plot(vis_anom_ownn,'k+')
+                            l2 = plt.plot(vis_anom_mm,'kx')
+                            plt.plot(vis_anom_QF3, 'ro',alpha=0.2, markersize=7, linewidth=2)
+                            plt.plot(vis_anom_QF1, 'ko',alpha=0.2, markersize=7, linewidth=2)
+                            plt.plot(vis_obs, '.', color=col, markersize=3, linewidth=2)
+                            plt.plot(vis_tvec, vis_preds, 'go', alpha=0.2, markersize=3, linewidth=2)
+                            plt.grid()
+                            pstring = paramdict[p].replace(' '+ylabelstr, '')
+                            titlestring = stationsdict[st].replace('[° C]', '')+', '+pstring+', '+\
+                                            start_vis.strftime('%d.%m.%Y %H:%M:%S')+'-'+end_vis.strftime('%d.%m.%Y %H:%M:%S')
+                            plt.title(titlestring, fontsize=fs, wrap=True)
+                            plt.ylabel(ylabelstr)
+                            plt.annotate(str(depth)+' m', xy=(0.05, 0.05), xycoords='axes fraction')
+                            plt.legend(['Ocean_WNN', 'Median-Methode'])
+                            #
+                            # date_form = DateFormatter("%b-%d")
+                            # plt.gca().xaxis.set_major_formatter(date_form)
+                            
+                            plt.gca().xaxis.set_major_formatter(
+                            mdates.ConciseDateFormatter(plt.gca().xaxis.get_major_locator()))
+
+                            plt.xlim(start_vis, end_vis)
+                            curr_end = end_sect
+                            plt.ion()
+                            plt.show(block=False)
+                            sfig = input('Save Figure?')
+                            if sfig =='y':
+                                savefigpath = os.path.join(
+                                evalpath,
+                                "Anomalies",
+                                stationsdict[st].replace(" ", "_"),
+                                p,
+                                str(depth) + "m",
+                                )
+                                if not os.path.exists(savefigpath):
+                                    os.makedirs(savefigpath)
+                                fig.savefig(os.path.join(savefigpath,figname), bbox_inches=bbox_inches)
+                                plt.close(fig)
+                            else:
+                                plt.close(fig)
+                                continue
+                                                        
+
 if __name__=='__main__':   
     # summarize_model_fitting()
     # predictions_observations()
     # plot_roc_metrics()
-    plot_tpr_fpr_summary()
+    # plot_tpr_fpr_summary()
     #plot_auc_roc_summary()
     #plot_mase_summary()
     # model_cross_validation()
     # choose_best_model()
+    visualize_predictions_anomalies(stations = ['Kiel Lighthouse'], params= ['WT'], dlevels=[-8., -13.])
     #main()
