@@ -22,7 +22,7 @@ stationsdict = {'Fehmarn Belt Buoy': 'Fehmarn',
 
 # parameter names
 params = ['WT', 'SZ']
-paramdict = {'WT': 'Wassertemperatur [° C]', 'SZ':'Salzgehalt []'}
+paramdict = {'WT': 'Wassertemperatur [° C]', 'SZ':'Salzgehalt'}
 
 # temporal limits
 tlims = [dt.datetime(2020,1,1,0,0),dt.datetime(2024,6,30,23,59)]
