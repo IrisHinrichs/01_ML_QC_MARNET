@@ -1098,5 +1098,5 @@ if __name__=='__main__':
     #plot_mase_summary()
     # model_cross_validation()
     # choose_best_model()
-    visualize_predictions_anomalies(stations = ['Kiel Lighthouse'], params= ['WT'], dlevels=[-8., -13.])
+    visualize_predictions_anomalies(stations = ['Kiel Lighthouse'], params= ['SZ'], dlevels=[-8.])
     #main()
