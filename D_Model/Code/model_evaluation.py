@@ -46,7 +46,7 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 log_file = 'log_file.txt'
 
 # differencing parameter
-ddiff = 0
+ddiff = 2
 
 # where to save dataframe of training results
 savepath = os.path.join(
@@ -1040,18 +1040,22 @@ def visualize_predictions_anomalies(stations = stations, params=params, dlevels=
                                 vis_anom_ownn = vis_data.DATA_VALUE[vis_data.ad_ownn>=ownn_thresh]
                             else:
                                 vis_anom_ownn = np.nan
-                            if not np.isnan(mm_thresh):
-                                vis_anom_mm = vis_data.DATA_VALUE[vis_data.ad_mm>=mm_thresh]
-                            else:
-                                vis_anom_mm = np.nan
+                            
                             
                             # plot time series
                             l1 = plt.plot(vis_anom_ownn,'k+')
-                            l2 = plt.plot(vis_anom_mm,'kx')
+                            if ddiff==0:
+                                if not np.isnan(mm_thresh):
+                                    vis_anom_mm = vis_data.DATA_VALUE[vis_data.ad_mm>=mm_thresh]
+                                else:
+                                    vis_anom_mm = np.nan
+                                l2 = plt.plot(vis_anom_mm,'kx')
+                                plt.plot(vis_tvec, vis_preds, 'go', alpha=0.2, markersize=3, linewidth=2)
+                            
                             plt.plot(vis_anom_QF3, 'ro',alpha=0.2, markersize=7, linewidth=2)
                             plt.plot(vis_anom_QF1, 'ko',alpha=0.2, markersize=7, linewidth=2)
                             plt.plot(vis_obs, '.', color=col, markersize=3, linewidth=2)
-                            plt.plot(vis_tvec, vis_preds, 'go', alpha=0.2, markersize=3, linewidth=2)
+                            
                             plt.grid()
                             pstring = paramdict[p].replace(' '+ylabelstr, '')
                             titlestring = stationsdict[st].replace('[° C]', '')+', '+pstring+', '+\
@@ -1059,7 +1063,10 @@ def visualize_predictions_anomalies(stations = stations, params=params, dlevels=
                             plt.title(titlestring, fontsize=fs, wrap=True)
                             plt.ylabel(ylabelstr)
                             plt.annotate(str(depth)+' m', xy=(0.05, 0.05), xycoords='axes fraction')
-                            plt.legend(['Ocean_WNN', 'Median-Methode'])
+                            if ddiff==0:
+                                plt.legend(['Ocean_WNN', 'Median-Methode'])
+                            else:
+                                plt.legend(['Ocean_WNN'])
                             #
                             # date_form = DateFormatter("%b-%d")
                             # plt.gca().xaxis.set_major_formatter(date_form)
@@ -1098,5 +1105,5 @@ if __name__=='__main__':
     #plot_mase_summary()
     # model_cross_validation()
     # choose_best_model()
-    visualize_predictions_anomalies(stations = ['Kiel Lighthouse'], params= ['SZ'], dlevels=[-8.])
+    visualize_predictions_anomalies(stations = ['Fehmarn Belt Buoy'], params= ['WT'], dlevels=[-3.])
     #main()
