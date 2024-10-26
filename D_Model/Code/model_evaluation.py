@@ -288,6 +288,8 @@ def plot_tpr_fpr_summary():
         all_axes = []
         if m=='Median-Methode' and ddiff!=0:
             continue # median method was not applied on differenced time series
+        results = []
+        resultsfile = os.path.join(currentdir, 'D_Model','Evaluation','Diff'+str(ddiff)+'_'+m+'_ROCmetrics.csv')
         fig = plt.figure(layout=layout)
         for p in params:
             counter_p+=1
@@ -310,10 +312,12 @@ def plot_tpr_fpr_summary():
                     ts_eval = non_NaN(ts)
                 
                     # value pair(tpr, fpr) corresponding to Jmax
-                    fpr, tpr, threshs,_ = calc_roc_metrics(ts_eval, mthds[m])
+                    fpr, tpr, threshs,auc = calc_roc_metrics(ts_eval, mthds[m])
                     if all([np.isnan(fpr).all(), np.isnan(tpr).all(), np.isnan(threshs).all()]): # no anomalies in ground truth data
                         continue
                     opt_thresh, index = optimal_thresh(tpr, fpr, threshs)
+                    new_entry = [s, p, d, fpr[index],tpr[index], auc]
+                    results.append(new_entry)
                     (l2,) = plt.plot(
                         fpr[index],
                         tpr[index],
@@ -342,7 +346,17 @@ def plot_tpr_fpr_summary():
         #             handler_map={tuple: HandlerTuple(ndivide=None)})
         savefigstr = os.path.join(savefigpath,m+'_TPR_FPR_summary.png')
         fig.savefig(savefigstr, bbox_inches=bbox_inches)
-                
+
+        # save data
+        resdf = pd.DataFrame(results, columns= [
+            "Station",
+            "Parameter",
+            "Depth",
+            "FPR", 
+            "TPR", 
+            "AUC_ROC"
+        ])
+        resdf.to_csv(resultsfile, index=False)       
 
 def reverse_differencing(startpoints: np.array, ts_predict: np.array)->np.array:
     ''' Does not really make sense because deviations between predictions and observations
