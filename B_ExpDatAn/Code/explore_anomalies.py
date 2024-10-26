@@ -288,14 +288,14 @@ def plot_fraction_seq():
     time series and plot results'''
    
     fstring = '_anomalies_'
-    seq_len = 5
+    seq_len = 24
    
     # variables related to figure
     plt.rcParams['figure.figsize'][0]=16*cm
     plt.rcParams['figure.figsize'][1]=5*cm
     
     savefigpath = os.path.join('B_ExpDatAn', 'Figures')
-    resultsfile = os.path.join('B_ExpDatAn','Results', 'fraction_anom_points_in_seq_glen_'+str(seq_len))
+    resultsfile = os.path.join('B_ExpDatAn','Results', 'fraction_anom_points_in_seq_glen_'+str(seq_len)+'.csv')
     results = []
     
     marker = [["1", "v", "P", "s"], ["2", "^", "*", "D"]]
@@ -377,7 +377,7 @@ def plot_fraction_seq():
     savefigstr = os.path.join(savefigpath,'fraction_of_values_in_seq_anomalies_l'+str(seq_len)+'.png')
     fig.savefig(savefigstr, bbox_inches=bbox_inches)  
      
-    resdf.to_csv(resultsfile)           
+    resdf.to_csv(resultsfile, index=False)           
     return
 def visualize_anomalies():
     fstring = '_anomalies_'
