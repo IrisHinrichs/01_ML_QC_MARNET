@@ -507,8 +507,8 @@ def combine_anomalies(anom_meta, gap_thresh=12):
 
     Returns
     -------
-    anomalies : TYPE
-        DESCRIPTION.
+    anomalies : pandas.core.frame.DataFrame
+        same as anom_meta but with combined anomalies.
 
     '''
     # initiate dataframe for new anomaly meta data
@@ -521,7 +521,7 @@ def combine_anomalies(anom_meta, gap_thresh=12):
             continue
         # length of current anomaly
         anom_len = anom_meta.LENGTH.iloc[ind]
-        # number of missing valuesbofore and after current anomaly
+        # number of missing values before and after current anomaly
         missbef= anom_meta.N_MISSING_BEFORE.iloc[ind]
         missaft= anom_meta.N_MISSING_AFTER.iloc[ind]
         # start of current anomaly
@@ -552,9 +552,10 @@ def combine_anomalies(anom_meta, gap_thresh=12):
     anomalies=anomalies.set_index(anomalies.index.strftime('%Y-%m-%d %H:%M:%S'))
     return anomalies        
     
-
-# anomaly_exploration()
-# plot_anomaly_mdata()
-visualize_anomalies()
+if __name__=='__main__':
+    # anomaly_exploration()
+    # plot_anomaly_mdata()
+    # visualize_anomalies()
+    plot_fraction_seq()
 
 
