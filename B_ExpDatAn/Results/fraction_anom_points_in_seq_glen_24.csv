@@ -1,0 +1,42 @@
+Station,Parameter,Depth,Fraction of anomalous values being part of of sequences longer than 24
+Fehmarn Belt Buoy,WT,-1.0,0.9714285714285714
+Fehmarn Belt Buoy,WT,-15.0,0.7346938775510204
+Fehmarn Belt Buoy,WT,-20.0,0.576271186440678
+Fehmarn Belt Buoy,WT,-24.0,0.6481481481481481
+Fehmarn Belt Buoy,WT,-3.0,0.7142857142857143
+Fehmarn Belt Buoy,WT,-6.0,0.7777777777777778
+Fehmarn Belt Buoy,SZ,-10.0,0.6140350877192983
+Fehmarn Belt Buoy,SZ,-15.0,0.5737704918032787
+Fehmarn Belt Buoy,SZ,-20.0,0.49295774647887325
+Fehmarn Belt Buoy,SZ,-24.0,0.43373493975903615
+Fehmarn Belt Buoy,SZ,-3.0,0.9720976581963129
+Fehmarn Belt Buoy,SZ,-6.0,0.6730769230769231
+Kiel Lighthouse,WT,-13.0,0.0
+Kiel Lighthouse,WT,-2.0,1.0
+Kiel Lighthouse,WT,-8.0,0.0
+Kiel Lighthouse,SZ,-13.0,0.0
+Kiel Lighthouse,SZ,-4.0,0.0
+Kiel Lighthouse,SZ,-8.0,0.0
+North Sea Buoy II,WT,-11.0,0.7916666666666666
+North Sea Buoy II,WT,-15.0,0.7443946188340808
+North Sea Buoy II,WT,-20.0,0.7886178861788617
+North Sea Buoy II,WT,-25.0,0.6627906976744186
+North Sea Buoy II,WT,-3.0,1.0
+North Sea Buoy II,WT,-30.0,0.76
+North Sea Buoy II,WT,-35.0,0.8142857142857143
+North Sea Buoy II,WT,-6.0,0.890625
+North Sea Buoy II,SZ,-11.0,0.44881889763779526
+North Sea Buoy II,SZ,-35.0,0.45930232558139533
+North Sea Buoy II,SZ,-6.0,0.8507462686567164
+North Sea Buoy III,WT,-11.0,0.18012422360248448
+North Sea Buoy III,WT,-15.0,0.37333333333333335
+North Sea Buoy III,WT,-2.0,0.6444444444444445
+North Sea Buoy III,WT,-20.0,0.9422718808193669
+North Sea Buoy III,WT,-25.0,0.6222222222222222
+North Sea Buoy III,WT,-3.0,0.8666666666666667
+North Sea Buoy III,WT,-30.0,0.39436619718309857
+North Sea Buoy III,WT,-35.0,0.5957446808510638
+North Sea Buoy III,WT,-6.0,0.6590909090909091
+North Sea Buoy III,SZ,-11.0,0.9380530973451328
+North Sea Buoy III,SZ,-35.0,0.8379446640316206
+North Sea Buoy III,SZ,-6.0,0.7092198581560284
