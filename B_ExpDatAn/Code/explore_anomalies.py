@@ -256,28 +256,38 @@ def check_missval_around_anomaly(start_anom, tstamps, lgth=1):
     
     return int(math.ceil(missbef)), int(math.ceil(missaft))
 
-def plot_anomaly_mdata():
-    # not finished
-    count_rows=0
-    nrows = len(stations)
-    ncols=len(params)
+def plot_fraction_seq():
+    '''Analyse fraction of anomalous point that are part of sequential anomalies
+      of length greater than [seq_len] in single
+    time series and plot results'''
+   
     fstring = '_anomalies_'
+    seq_len = 5
    
-    # define figure height
-    # plt.rcParams['figure.figsize'][1]=14*cm
+    # variables related to figure
+    plt.rcParams['figure.figsize'][0]=16*cm
+    plt.rcParams['figure.figsize'][1]=5*cm
+    
+    savefigpath = os.path.join('B_ExpDatAn', 'Figures')
+    resultsfile = os.path.join('B_ExpDatAn','Results', 'fraction_anom_points_in_seq_glen_'+str(seq_len))
+    results = []
+    
+    marker = [["1", "v", "P", "s"], ["2", "^", "*", "D"]]
+    msize=7
+    fillst= 'full'
+    colors = ['blue', 'purple']
     fig = plt.figure(layout=layout)
-    plt.rcdefaults()
- 
-    savefigpath = '../Figures/anomaly_lengths.png'
-    marker = 'o'
-    msize=3
-    al=0.2
-   
+    
+    all_axes = []
+    counter_s = -1
     for st in stations:
+        station_axes = []
+        counter_s+=1
+        counter_p = -1
         stname = '_'.join(st.split(' '))
-        count_cols=1
-        curr_dir = '../Results/'+stname+'/Anomalies/'
+        curr_dir = os.path.join("B_ExpDatAn", "Results", stname, "Anomalies")
         for p in params:
+            counter_p+=1
             for f in os.listdir(curr_dir):
                 if f[0:2]==p and fstring in f:
                     print(f)
@@ -286,64 +296,62 @@ def plot_anomaly_mdata():
                 # get depth level
                 ff = f.split('_')
                 d = float(ff[1])*-1
-                data = pd.read_csv(curr_dir+f, sep=';', index_col='time_stamp')
-                data = combine_anomalies(data)
-                # convert string stating temporal duration to integer of hours
-                dur_hours = data.LENGTH
-                
-               
-                
-                #define colormap
-                if p == 'WT':
-                    col='blue'
-                else:
-                    col='purple'
-                
-                
-                ax=plt.subplot(nrows, ncols, count_rows*2+count_cols)
-                #plt.boxplot(dur_hours, vert=False, positions=[d]) 
-                plt.plot(dur_hours, [d]*len(dur_hours),marker, color=col,
-                         markersize=msize, alpha=al)
-                
-            if st==stations[0]:
-                plt.title(paramdict[p], fontsize=fs)
-            if p!='SZ':
-                plt.text(1.05, 0.5, stationsdict[st], 
-                    horizontalalignment='center',
-                    verticalalignment='center', 
-                    transform=plt.gca().transAxes, 
-                    rotation=90, **fontdict)
-            
-            # # keep current ylims
-            # ylims = plt.ylim()
-            
-            
-            # # set xlims, ylims
-            # plt.ylim(ylims)
-            # plt.xlim(tlims)
-            # plt.grid()
-            
-            # make legend
-            # legstring= [str(d) for d in unique_d]
-            # legstring.append('flag=3,4')
-            # plt.legend(legstring)
-            
-            
-            
-            # customize axes labels etc.
-            plt.yticks(fontsize= fs)
-            
-            ax.set_xscale('log')
-            ax.set_xticklabels([])
-            if count_rows*2+count_cols not in [nrows*ncols-1, nrows*ncols]:
-                ax.set_yticklabels([])
-            else:
-                # get current yticklabel locations
-                yticklabels = plt.gca().get_yticklabels()
-                yticklabels = [ll._text.replace(chr(8722), '') for ll in yticklabels]
-            count_cols+=1 
-        count_rows+=1 
-    fig.savefig(savefigpath, bbox_inches=bbox_inches)
+                data = pd.read_csv(os.path.join(curr_dir,f), sep=';', index_col='time_stamp')
+                data_c = combine_anomalies(data)
+                # calculate fraction of anomalies that are longer than 1
+                longer_1 = data_c[data_c.LENGTH>seq_len]
+                frac_anom = (longer_1.LENGTH.sum()-longer_1.N_MISSING_IN_SEQ.sum())/data.LENGTH.sum()
+                l1 = plt.plot(frac_anom, d ,marker[counter_p][counter_s], markersize=msize,
+                        fillstyle=fillst, color=colors[counter_p])
+                # save data in dataframe
+                new_entry = [st, p, d, frac_anom]
+                results.append(new_entry)
+            station_axes.append(l1[0])
+        all_axes.append(tuple(station_axes))
+
+    # save fractions data
+    resdf = pd.DataFrame(
+        results,
+        columns=[
+            "Station",
+            "Parameter",
+            "Depth",
+            "Fraction of anomalous values being part of of sequences longer than "
+            + str(seq_len),
+        ]
+    ) 
+    # mean fraction temperature
+    col = 'Fraction of anomalous values being part of of sequences longer than '+str(seq_len)
+    avgs= resdf.groupby('Parameter')[col].mean()
+    mean_temp = avgs.WT
+    # mean fraction salinity 
+    mean_sal = avgs.SZ 
+
+    plt.plot([mean_temp]*2, [-39, 1], '-', color=colors[0])
+    plt.plot([mean_sal]*2, [-39, 1], '-', color=colors[1])       
+    # set xlims, ylims, labels
+    plt.ylabel('Wassertiefe [m]')
+    plt.xlabel('Anteil')
+    plt.title('Markierte Werte als Sequenz')
+    # get current yticklabel locations
+    yticklocs = plt.gca().get_yticks()
+    yticklabels = plt.gca().get_yticklabels()
+    yticklabels = [ll._text.replace(chr(8722), '') for ll in yticklabels]
+    plt.gca().set_yticks(yticklocs[1:-2], yticklabels[1:-2])
+    plt.ylim((-39,1))
+    plt.xlim((-0.01,1.01))
+    plt.grid()
+    
+    plt.legend(all_axes,list(stationsdict.values()),
+            handler_map={tuple: HandlerTuple(ndivide=None)})
+    
+    # customize axes labels etc.
+    plt.yticks(fontsize= fs)
+    plt.xticks(fontsize=fs)
+    savefigstr = os.path.join(savefigpath,'fraction_of_values_in_seq_anomalies_l'+str(seq_len)+'.png')
+    fig.savefig(savefigstr, bbox_inches=bbox_inches)  
+     
+    resdf.to_csv(resultsfile)           
     return
 def visualize_anomalies():
     fstring = '_anomalies_'
