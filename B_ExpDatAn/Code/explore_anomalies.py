@@ -513,6 +513,7 @@ def combine_anomalies(anom_meta, gap_thresh=12):
     '''
     # initiate dataframe for new anomaly meta data
     anomalies=pd.DataFrame(columns= list(anom_meta.columns))
+    anomalies.loc[:,'N_MISSING_IN_SEQ']= []
     cont=False
     for ind in range(0,len(anom_meta)):
         if cont is True:
@@ -537,14 +538,14 @@ def combine_anomalies(anom_meta, gap_thresh=12):
             if next_missbef==missaft and start_next-end_anom<=dt.timedelta(seconds=3600): # timedelta in seconds
                 # both anomalies are connected by a sequence of missing values
                 # and can therefore be considered as a single anomaly
-                new_current_anomaly = [anom_len+missaft+len_next,missbef, next_missaft ]
+                new_current_anomaly = [anom_len+missaft+len_next,missbef, next_missaft, missaft ]
                 anomalies.loc[start] = new_current_anomaly
                 cont=True
             else:# anomaly is not combined with another one
-                anomalies.loc[start]= [anom_len, missbef, missaft] 
+                anomalies.loc[start]= [anom_len, missbef, missaft, 0] 
                 cont=False
         else: # anomaly is not combined with another one
-            anomalies.loc[start]= [anom_len, missbef, missaft]
+            anomalies.loc[start]= [anom_len, missbef, missaft, 0]
             cont=False
             continue
     # reset index
