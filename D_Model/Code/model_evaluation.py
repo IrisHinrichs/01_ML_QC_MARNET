@@ -1108,6 +1108,66 @@ def visualize_predictions_anomalies(stations = stations, params=params, dlevels=
                             else:
                                 plt.close(fig)
                                 continue
+def relate_fracSeq_ROCmetrics():
+    '''Analyse relationship between fraction of anomalous values
+    in sequences of longer than a certain value and the ROC metrics
+    TPR, FPR and AUC_ROC'''
+
+    # variables related to figure
+    plt.rcParams['figure.figsize'][0]=6*cm
+    plt.rcParams['figure.figsize'][1]=6*cm
+
+    roc_metrics_files = [
+        "Diff0_Median-Methode_ROCmetrics.csv",
+        "Diff0_Ocean_WNN_ROCmetrics.csv",
+        "Diff2_Ocean_WNN_ROCmetrics.csv",
+    ]
+    titlestrings = ["Median-Methode", "Ocean_WNN", "Ocean_WNN, 2x Diff."]
+
+    figstr= ["Diff0_mm_", "Diff0_ownn", "Diff2_ownn"]
+
+    seq_len = 5
+    # Data file containing information of fraction of
+    # anomalous values in sequences longer than 24 hours
+    frac_seq_file = os.path.join(
+        currentdir,
+        "B_ExpDatAn",
+        "Results",
+        "fraction_anom_points_in_seq_glen_"+str(seq_len)+".csv",
+    )
+    frac_seq_data = pd.read_csv(frac_seq_file, index_col=False)
+    columns = ['Station', 'Parameter', 'Depth']
+    frac_col = 'Fraction of anomalous values being part of of sequences longer than '+str(seq_len)
+    for i in range(0, len(figstr)):
+        figname = os.path.join(
+            currentdir,
+            "D_Model",
+            "Evaluation",
+            "Figures",
+            figstr[i] + "frac_seq_roc.png",
+        )
+        fig = plt.figure(layout=layout)
+        roc_file = roc_metrics_files[i]
+        roc_metrics_file = os.path.join(
+        currentdir, "D_Model", "Evaluation", roc_file
+    )
+        roc_metrics_data = pd.read_csv(roc_metrics_file, index_col=False)
+
+        # sort both dataframes
+        frac_seq_data = frac_seq_data.sort_values(columns, ascending=[True, False, False])
+        roc_metrics_data = roc_metrics_data.sort_values(columns,ascending=[True, False, False] )                                                     
+
+        x = frac_seq_data[frac_col]
+        y = roc_metrics_data.AUC_ROC
+        plt.plot(x,y , '+')
+        corr = np.corrcoef(x,y)
+        plt.annotate('Korrelation: '+str(round(corr[0][1],2)),(0,0))
+        plt.plot([0,1], [1,0], '--', color='k', alpha=0.2, linewidth=1)
+        plt.grid()
+        plt.title(titlestrings[i])
+        plt.ylabel('AUC_ROC')
+        plt.xlabel('Anteil anomaler Werte in Sequenz')
+        fig.savefig(figname, bbox_inches=bbox_inches)
                                                         
 
 if __name__=='__main__':   
