@@ -46,7 +46,7 @@ from D_Model.Code.ocean_wnn.algorithm_iris import CustomParameters as ownn_custP
 log_file = 'log_file.txt'
 
 # differencing parameter
-ddiff = 2
+ddiff = 0
 
 # where to save dataframe of training results
 savepath = os.path.join(
@@ -1168,16 +1168,17 @@ def relate_fracSeq_ROCmetrics():
         plt.ylabel('AUC_ROC')
         plt.xlabel('Anteil anomaler Werte in Sequenz')
         fig.savefig(figname, bbox_inches=bbox_inches)
-                                                        
+
 
 if __name__=='__main__':   
     # summarize_model_fitting()
     # predictions_observations()
     # plot_roc_metrics()
     # plot_tpr_fpr_summary()
-    #plot_auc_roc_summary()
+    # plot_auc_roc_summary()
     #plot_mase_summary()
     # model_cross_validation()
     # choose_best_model()
-    visualize_predictions_anomalies(stations = ['Fehmarn Belt Buoy'], params= ['WT'], dlevels=[-3.])
+    # visualize_predictions_anomalies(stations = ['Fehmarn Belt Buoy'], params= ['WT'], dlevels=[-3.])
+    relate_fracSeq_ROCmetrics()
     #main()
