@@ -288,11 +288,11 @@ def plot_fraction_seq():
     time series and plot results'''
    
     fstring = '_anomalies_'
-    seq_len = 24
+    seq_len = 5
    
     # variables related to figure
     plt.rcParams['figure.figsize'][0]=16*cm
-    plt.rcParams['figure.figsize'][1]=5*cm
+    plt.rcParams['figure.figsize'][1]=6.0*cm
     
     savefigpath = os.path.join('B_ExpDatAn', 'Figures')
     resultsfile = os.path.join('B_ExpDatAn','Results', 'fraction_anom_points_in_seq_glen_'+str(seq_len)+'.csv')
@@ -356,9 +356,9 @@ def plot_fraction_seq():
     plt.plot([mean_temp]*2, [-39, 1], '-', color=colors[0])
     plt.plot([mean_sal]*2, [-39, 1], '-', color=colors[1])       
     # set xlims, ylims, labels
-    plt.ylabel('Wassertiefe [m]')
-    plt.xlabel('Anteil')
-    plt.title('Markierte Werte als Sequenz')
+    plt.ylabel('Wassertiefe [m]', fontsize=fs)
+    plt.xlabel('Anteil', fontsize=fs)
+    plt.title('Markierte Werte als Sequenz', fontsize=fs)
     # get current yticklabel locations
     yticklocs = plt.gca().get_yticks()
     yticklabels = plt.gca().get_yticklabels()
