@@ -1179,6 +1179,10 @@ if __name__=='__main__':
     #plot_mase_summary()
     # model_cross_validation()
     # choose_best_model()
+<<<<<<< HEAD
     # visualize_predictions_anomalies(stations = ['Fehmarn Belt Buoy'], params= ['WT'], dlevels=[-3.])
     relate_fracSeq_ROCmetrics()
+=======
+    visualize_predictions_anomalies(stations = ['Kiel Lighthouse'], params= ['SZ'], dlevels=[-4.])
+>>>>>>> 239432d64a1a95c8247d7dad504fe4264f02265c
     #main()
