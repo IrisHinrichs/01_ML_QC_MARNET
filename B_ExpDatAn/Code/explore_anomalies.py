@@ -7,6 +7,7 @@ Created on Mon Jul 29 15:32:37 2024
 import math
 import datetime as dt
 import pandas as pd 
+import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple 
 import matplotlib.dates as mdates
@@ -292,13 +293,16 @@ def plot_fraction_seq():
    
     # variables related to figure
     plt.rcParams['figure.figsize'][0]=16*cm
-    plt.rcParams['figure.figsize'][1]=6.0*cm
+    plt.rcParams['figure.figsize'][1]=10.0*cm
     
     savefigpath = os.path.join('B_ExpDatAn', 'Figures')
     resultsfile = os.path.join('B_ExpDatAn','Results', 'fraction_anom_points_in_seq_glen_'+str(seq_len)+'.csv')
     results = []
-    
-    marker = [["1", "v", "P", "s"], ["2", "^", "*", "D"]]
+    markerT=["1", "v", "P", "s"]
+    markerT.reverse()
+    markerS=["2", "^", "*", "D"]
+    markerS.reverse()
+    marker = [markerT, markerS]
     msize=7
     fillst= 'full'
     colors = ['blue', 'purple']
@@ -306,6 +310,7 @@ def plot_fraction_seq():
     
     all_axes = []
     counter_s = -1
+    stations.reverse()
     for st in stations:
         station_axes = []
         counter_s+=1
@@ -368,7 +373,9 @@ def plot_fraction_seq():
     plt.xlim((-0.01,1.01))
     plt.grid()
     
-    plt.legend(all_axes,list(stationsdict.values()),
+    legendstrings = list(stationsdict.values())
+    legendstrings.reverse()
+    plt.legend(all_axes,legendstrings,
             handler_map={tuple: HandlerTuple(ndivide=None)})
     
     # customize axes labels etc.
