@@ -1,11 +1,24 @@
 # -*- coding: utf-8 -*-
 import matplotlib as mtpl
+from matplotlib import pyplot as plt
 import numpy as np
 from scipy.signal import lombscargle
-from B_ExpDatAn.Code.common_variables import (
+
+import os
+import sys
+
+# Add absolute path of directory 
+# 01_ML_QC_MARNET to sys.path
+currentdir=os.path.dirname(__file__)
+pathpieces = os.path.split(currentdir)
+while pathpieces[-1]!='01_ML_QC_MARNET':
+    currentdir= os.path.dirname(currentdir)
+    pathpieces = os.path.split(currentdir)
+sys.path.insert(0,currentdir)
+
+from B_ExpDatAn.Code.common_variables import (  # noqa: E402
     bbox_inches,
     cm,
-    
     fs,
     layout,
     fontdict,
@@ -15,13 +28,8 @@ from B_ExpDatAn.Code.common_variables import (
     stationsdict,
     tlims,
 )
-from matplotlib import pyplot as plt
-from B_ExpDatAn.Code.utilities import datapath, get_filestring, read_station_data
+from B_ExpDatAn.Code.utilities import datapath, get_filestring, read_station_data  # noqa: E402
 
-import os
-import sys
-
-os.chdir(sys.path[0]) # change to modules parent directory
 
 nlags = 96 # for autocorrelation
 def plot_periodograms(res='h'):

@@ -6,8 +6,21 @@ Created on Tue Jul 16 20:13:09 2024
 """
 
 import matplotlib as mtpl
+from matplotlib import pyplot as plt
+import sys
+import os
 import numpy as np
-from common_variables import (
+
+# Add absolute path of directory 
+# 01_ML_QC_MARNET to sys.path
+currentdir=os.path.dirname(__file__)
+pathpieces = os.path.split(currentdir)
+while pathpieces[-1]!='01_ML_QC_MARNET':
+    currentdir= os.path.dirname(currentdir)
+    pathpieces = os.path.split(currentdir)
+sys.path.insert(0,currentdir)
+
+from B_ExpDatAn.Code.common_variables import (  # noqa: E402
     bbox_inches,
     cm,
     fontdict,
@@ -19,14 +32,14 @@ from common_variables import (
     stationsdict,
     tlims,
 )
-from matplotlib import pyplot as plt
-from utilities import get_filestring, read_station_data
+
+from B_ExpDatAn.Code.utilities import get_filestring, read_station_data  # noqa: E402
 
 # define figure height
 plt.rcParams['figure.figsize'][1]=14*cm
 fig = plt.figure(layout=layout)
 
-savefigpath = '../Figures/all_time_series.png'
+savefigpath = os.path.join(currentdir, "B_ExpDatAn", "Figures", "all_time_series.png")
 marker = '.'
 msize=1
 fillst= 'full'

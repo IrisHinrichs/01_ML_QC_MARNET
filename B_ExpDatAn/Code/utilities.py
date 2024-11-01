@@ -157,7 +157,8 @@ def plot_all_dl_time_series(station='North Sea Buoy III', p='WT',
     
     # read data
     filestring = get_filestring(station, p)
-    data = read_station_data(datapath+filestring)
+    filestring = os.path.join(datapath,filestring)
+    data = read_station_data(filestring)
     
     # temporal slice
     mask = (data.index>=start) & (data.index<=end)
@@ -191,10 +192,13 @@ def plot_all_dl_time_series(station='North Sea Buoy III', p='WT',
         depth_levels = dl
         depthstr = '_'.join([str(d) for d in dl])
         
-    savefigpath = '../Figures/'+station.replace(' ', '_')+\
-                    '/_'+p+\
-                    '_'+start_str+'_'+end_str+\
-                    '_'+depthstr+'.png'
+    savefigpath = os.path.join(
+        currentdir,
+        "B_ExpDatAn",
+        "Figures",
+        station.replace(" ", "_"),
+        "_" + p + "_" + start_str + "_" + end_str + "_" + depthstr + ".png",
+    )
     counter_d = 1
     for d in depth_levels:
         plt.subplot(len(depth_levels), 1, counter_d)
@@ -262,7 +266,8 @@ def plot_anomaly_legend():
     plt.xlim([0.16,1.9])
     plt.ylim([0.2,1])
     plt.axis('off')
-    fig.savefig('../Figures(legend_anomalies.png')
+    figfile = os.path.join(currentdir, 'B_ExpDatAn','Figures', 'legend_anomalies.png')
+    fig.savefig(figfile)
 
 def read_json_file(method = 'median_method'):
      #read json file and append necessary attributes

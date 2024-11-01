@@ -7,7 +7,6 @@ Created on Mon Jul 29 15:32:37 2024
 import math
 import datetime as dt
 import pandas as pd 
-import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple 
 import matplotlib.dates as mdates
@@ -74,7 +73,7 @@ def statistics(stname='North Sea Buoy II', paracode='WT', dlevels='all',
     n_qfs = 4
      # define path and filename
     strings = get_filestring(stname)
-    file = datapath+strings
+    file = os.path.join(datapath,strings)
     df = read_station_data(file)
     
    
@@ -122,14 +121,16 @@ def anomaly_exploration():
     
     for st in stations:
         # path for data storage
-        savepath = '../Results/'+'_'.join(st.split(' '))+'/Anomalies/'
-        
+        savepath = os.path.join(
+            currentdir, "B_ExpDatAn", "Results", "_".join(st.split(" ")) + "Anomalies"
+        )
         time_series_without_anomalies=[]
-        savestring_no_anomalies = savepath+'no_anomalies.txt'
+        savestring_no_anomalies = os.path.join(savepath,'no_anomalies.txt')
         for p in params:
             filestr = get_filestring(st, p)
             print(filestr)
-            data=read_station_data(filestr=datapath+filestr)
+            filestr=os.path.join(datapath,filestr)
+            data=read_station_data(filestr)
     
             # Find data with quality flag set to 4 or 3 in both validation levels
             mask = (data.QF3.isin([3,4])) | (data.QF1.isin([3,4]))
@@ -148,7 +149,7 @@ def anomaly_exploration():
                     continue # to next time series
                 tstamps = pd.Series(data[data['Z_LOCATION']==d].index) # time stamps of all observations on current depth level
                 
-                savestring =savepath +p+'_'+str(abs(d))+'_anomalies_'+'_'.join(st.split(' '))+'.csv'
+                savestring =os.path.join(savepath,p+'_'+str(abs(d))+'_anomalies_'+'_'.join(st.split(' '))+'.csv')
                 
                 # timestamp of first anomalie in current time series
                 start_anom=danom.index[0]
@@ -396,7 +397,9 @@ def visualize_anomalies():
     
     for st in stations:
         stname = '_'.join(st.split(' '))
-        curr_dir = '../Results/'+stname+'/Anomalies/'
+        curr_dir = os.path.join(
+            currentdir, "B_ExpDatAn", "Results", stname, "Anomalies"
+        )
         for p in params:
             
             #define colormap
@@ -409,7 +412,7 @@ def visualize_anomalies():
                 
                 
             # read station data
-            station_data = read_station_data(datapath+get_filestring(st, p))
+            station_data = read_station_data(os.path.join(datapath,get_filestring(st, p)))
             
            
             for f in os.listdir(curr_dir):
@@ -423,7 +426,14 @@ def visualize_anomalies():
                 data = pd.read_csv(curr_dir+f, sep=';', index_col='time_stamp')
                 
                 # create path to save figures
-                savefigpath = '../Figures/'+ stname+'/Anomalies/'+p+'_'+str(abs(d))+'/'
+                savefigpath = os.path.join(
+                    currentdir,
+                    "B_ExpDatAn",
+                    "Figures",
+                    stname,
+                    "Anomalies",
+                    p + "_" + str(abs(d))
+                )
                 if not os.path.exists(savefigpath):
                     os.makedirs(savefigpath)
                 

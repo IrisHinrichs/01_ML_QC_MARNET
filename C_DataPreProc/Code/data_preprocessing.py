@@ -3,6 +3,18 @@
 #import datetime as dt
 import pandas as pd
 import numpy as np
+import os
+import sys
+
+# Add absolute path of directory 
+# 01_ML_QC_MARNET to sys.path
+currentdir=os.path.dirname(__file__)
+pathpieces = os.path.split(currentdir)
+while pathpieces[-1]!='01_ML_QC_MARNET':
+    currentdir= os.path.dirname(currentdir)
+    pathpieces = os.path.split(currentdir)
+sys.path.insert(0,currentdir)
+
 from B_ExpDatAn.Code.time_series_statistics import find_all_time_spans  # noqa: E402
 
 

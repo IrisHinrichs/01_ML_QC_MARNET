@@ -8,6 +8,9 @@ import numpy as np
 import pandas as pd
 import os
 import sys
+from matplotlib import pyplot as plt
+from matplotlib.legend_handler import HandlerTuple
+
 # Add absolute path of directory 
 # 01_ML_QC_MARNET to sys.path
 currentdir=os.path.dirname(__file__)
@@ -24,36 +27,20 @@ from B_ExpDatAn.Code.common_variables import (  # noqa: E402
     params,
     tlims,
     stationsdict,
-    paramdict,
     layout,
     cm,
     fs,
-    fontdict,
     bbox_inches,
 )
 
-from matplotlib import pyplot as plt
-from matplotlib.legend_handler import HandlerTuple
-
-from B_ExpDatAn.Code.common_variables import (
-    layout,
-    cm,
-    stations,
-    stationsdict,
-    params,
-    tlims,
-    fs,
-    bbox_inches,
-)
-    
-import os
-    
 
 def plot_coverage():
     # variables related to figure
     plt.rcParams['figure.figsize'][1]=10*cm
     fig = plt.figure(layout=layout)
-    savefigpath = '../Figures/temporal_coverage.png'
+    savefigpath = os.path.join(
+        currentdir, "B_ExpDatAn", "Figures", "temporal_coverage.png"
+    )
     marker = [['1','v','P','s'], ['2', '^','*',  'D']]
     msize=7
     fillst= 'full'
@@ -126,7 +113,9 @@ def analyze_gaps():
    
     for s in stations:
         # path for data storage
-        savepath = '../Results/'+'_'.join(s.split(' '))+'/'
+        savepath = os.path.join(
+            currentdir, "B_ExpDatAn", "Results", "_".join(s.split(" "))
+        )
         if not os.path.exists(savepath):
             os.makedirs(savepath)
         for p in params:
@@ -135,15 +124,23 @@ def analyze_gaps():
             
             # max time spans as function of 
             # time delta defining data gaps to be ingored
-            savestringtstd =savepath+'Time_Spans/' +p+'_time_spans_deltas_'+'_'.join(s.split(' '))+'.csv'
+            savestringtstd = os.path.join(
+                savepath,
+                "Time_Spans",
+                p + "_time_spans_deltas_" + "_".join(s.split(" ")) + ".csv",
+            )
             
             # change in minutes of sampling scheme
-            savestringmints= savepath +p+'_sampling_scheme_'+'_'.join(s.split(' '))+'.csv'
+            savestringmints = os.path.join(
+                savepath, p + "_sampling_scheme_" + "_".join(s.split(" ")) + ".csv"
+            )
             
             # time delta corresponding t 99.9% of cumulative distribution
             # savestringtd99p9= savepath+'Quantiles/' +p+'_td99.9_'+'_'.join(s.split(' '))+'.csv'
             # time delta corresponding t 50% of cumulative distribution
-            savestringtd50= savepath+'Quantiles/' +p+'_td50_'+'_'.join(s.split(' '))+'.csv'
+            savestringtd50 = os.path.join(
+                savepath, "Quantiles", p + "_td50_" + "_".join(s.split(" ")) + ".csv"
+            )
             
             filestring = get_filestring(s,p,)
             print(filestring)
@@ -192,7 +189,16 @@ def analyze_gaps():
             tdelta_50=pd.DataFrame(columns= ['TIME_DELTA_0p5'], index=depth_index)
             for d in unique_d:
                 # filestring for data storage
-                savestringts =savepath+'Time_Spans/' +p+'_'+str(abs(d))+'_max_time_spans_'+'_'.join(s.split(' '))+'.csv'
+                savestringts = os.path.join(
+                    savepath,
+                    "Time_Spans",
+                    p
+                    + "_"
+                    + str(abs(d))
+                    + "_max_time_spans_"
+                    + "_".join(s.split(" "))
+                    + ".csv",
+                )
                 
                 
                 #print('Tiefenstufe '+ str(abs(d))+' m')
@@ -307,12 +313,16 @@ def plot_max_time_spans(time_delta=False, frac=False):
     all_axes = []
     
     # path to files with results from analyze data_gaps
-    resultpath = '../Results/'
+    resultpath = os.path.join(currentdir, 'B_ExpDatAn','Results')
     fstring = 'max_time_spans'
     if time_delta:
-        savefigpath = '../Figures/max_time_spans_deltas.png'
+        savefigpath = os.path.join(
+            currentdir, "B_ExpDatAn", "Figures", "max_time_spans_deltas.png"
+        )
     else:
-        savefigpath = '../Figures/max_time_spans.png'
+        savefigpath = os.path.join(
+            currentdir, "B_ExpDatAn", "Figures", "max_time_spans.png"
+        )
     for s in stations:
         station_axes = []
         counter_s+=1
@@ -320,7 +330,7 @@ def plot_max_time_spans(time_delta=False, frac=False):
         stname = '_'.join(s.split(' '))
         for p in params:
             counter_p+=1
-            curr_dir = resultpath+stname+'/'
+            curr_dir = os.path.join(resultpath,stname)
             for f in os.listdir(curr_dir):
                 if f[0:2]==p and fstring in f:
                     print(f)
@@ -458,11 +468,13 @@ def plot_td(quant='50'):
     fillst= 'full'
     colors = ['blue', 'purple']
     all_axes = []
-    savefigpath = '../Figures/td'+quant+'.png'
+    savefigpath = os.path.join(
+        currentdir, "B_ExpDatAn", "Figures", "td" + quant + ".png"
+    )
    
     
     # path to files with results from analyze data_gaps
-    resultpath = '../Results/'
+    resultpath = os.path.join(currentdir, 'B_ExpDatAn','Results')
     fstring = 'td'+quant
     
     
@@ -474,7 +486,7 @@ def plot_td(quant='50'):
         stname = '_'.join(s.split(' '))
         for p in params:
             counter_p+=1
-            curr_dir = resultpath+stname+'/'
+            curr_dir = os.path.join(resultpath,stname)
             for f in os.listdir(curr_dir):
                 if f[0:2]==p and fstring in f:
                     print(f)
