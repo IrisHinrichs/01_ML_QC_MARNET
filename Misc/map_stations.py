@@ -15,7 +15,7 @@ import os
 import netCDF4
 import sys
 
-abspath = os.path.abspath("B_ExpDatAn/Code")
+abspath = os.path.abspath(os.path.join("B_ExpDatAn", "Code"))
 sys.path.insert(0, abspath)
 from common_variables import cm, fs, bbox_inches  # noqa: E402
 
@@ -26,7 +26,7 @@ def map_stations(
     # define everything that has to do with the resulting figure
     plt.rcParams["figure.figsize"][1] = 10 * cm
     plt.figure()#layout=layout)
-    savefigpath = "Misc/map_stations.png"
+    savefigpath = os.path.join("Misc", "map_stations.png")
     dlon = 0.5
     dlat = 1
     cmap = matplotlib.cm.bone
@@ -36,8 +36,10 @@ def map_stations(
     extent = [min(lon) - dlon, max(lon) + dlon, min(lat) - dlat, max(lat) + dlat]
 
     # load GEBCO
-    gebcofile = (
-        "Misc\GEBCO_14_Aug_2024_1671b01b7c83\gebco_2024_n67.0_s50.0_w10.0_e30.0.nc"
+    gebcofile = os.path.join(
+        "Misc",
+        "GEBCO_14_Aug_2024_1671b01b7c83",
+        "gebco_2024_n67.0_s50.0_w10.0_e30.0.nc",
     )
     rg = netCDF4.Dataset(gebcofile, "r", format="NETCDF4")
     elev = rg["elevation"][:]
